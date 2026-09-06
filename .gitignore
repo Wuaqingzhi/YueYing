@@ -25,3 +25,4 @@ local.properties
 *.keystore
 keystore.properties
 workspace.json
+*.bak
