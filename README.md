@@ -53,7 +53,7 @@
 要求：minSdk 21，targetSdk 34。
 
 ```
-git clone https://github.com/yourname/yueying.git
+git clone https://github.com/Wuaqingzhi/YueYing.git
 ```
 
 用 Android Studio 打开项目直接构建即可。项目在 AndroidIDE 上开发调试，理论上也兼容其它 Android 构建环境。

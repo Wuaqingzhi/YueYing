@@ -28,12 +28,12 @@ import org.json.JSONObject
 
 /**
  * GitHub Release 更新检测。
- * 真实实现：GET https://api.github.com/repos/yourname/yueying/releases/latest（改成你自己的 GitHub 仓库；仓库不存在时 404 返回 null，App 显示无更新，安全）
+ * 真实实现：GET https://api.github.com/repos/Wuaqingzhi/YueYing/releases/latest（改成你自己的 GitHub 仓库；仓库不存在时 404 返回 null，App 显示无更新，安全）
  */
 object UpdateChecker {
 
     private const val RELEASES_LATEST_URL =
-        "https://api.github.com/repos/yourname/yueying/releases/latest"
+        "https://api.github.com/repos/Wuaqingzhi/YueYing/releases/latest"
 
     /** GitHub 下载加速镜像站前缀（国内直连 GitHub 慢/失败时的兜底下载通道） */
     const val MIRROR_PREFIX = "https://cdn.gh-proxy.org/"

@@ -305,7 +305,7 @@ private fun OnboardingFeature(
 private fun GitHubCard(context: android.content.Context) {
     Card(
         onClick = {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/yourname/yueying"))
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Wuaqingzhi/YueYing"))
             context.startActivity(intent)
         },
         modifier = Modifier.fillMaxWidth(),
@@ -340,7 +340,7 @@ private fun GitHubCard(context: android.content.Context) {
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "github.com/yourname/yueying",
+                    text = "github.com/Wuaqingzhi/YueYing",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
