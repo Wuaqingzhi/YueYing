@@ -44,6 +44,7 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.OpenInNew
@@ -94,7 +95,6 @@ fun AboutScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    // 系统返回键 → 返回主页（而不是退出应用）
     BackHandler { onBack() }
     val pkgInfo = remember {
         runCatching { context.packageManager.getPackageInfo(context.packageName, 0) }.getOrNull()
@@ -126,31 +126,23 @@ fun AboutScreen(
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // ---------- App 头部 ----------
             AppHeader(versionName = versionName, versionCode = versionCode)
 
-            // ---------- 简介 ----------
             InfoCard(
                 icon = Icons.Outlined.Cloud,
                 title = "应用简介",
                 description = "月影（YueYing）是一款网盘分享链接解析与高速下载工具。" +
                     "粘贴分享链接，登录网盘账号后即可浏览分享内容并直接高速下载文件。"
             )
-            
 
-            // ---------- 支持平台 ----------
             PlatformCard()
 
-            // ---------- 功能特性 ----------
             FeatureCard()
 
-            // ---------- 技术栈 ----------
             TechCard()
 
-            // ---------- 免责声明 ----------
             DisclaimerCard()
 
-            // ---------- 开源协议 ----------
             Text(
                 text = "本项目基于 GNU AGPL-3.0 协议开源",
                 style = MaterialTheme.typography.labelSmall,
@@ -159,12 +151,12 @@ fun AboutScreen(
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
 
-            // ---------- 重新预览欢迎界面 ----------
             PreviewOnboardingCard(onClick = onPreviewOnboarding)
 
-            // ---------- 开源仓库 ----------
             GitHubCard(context)
+
             Spacer(modifier = Modifier.height(10.dp))
+
             QQGroupCard(context)
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -181,7 +173,6 @@ fun AboutScreen(
     }
 }
 
-/** App 头部：渐变图标 + 应用名 + 版本 + 标语 */
 @Composable
 private fun AppHeader(versionName: String, versionCode: Int) {
     Column(
@@ -234,7 +225,6 @@ private fun AppHeader(versionName: String, versionCode: Int) {
     }
 }
 
-/** 通用信息卡片：图标 + 标题 + 描述 */
 @Composable
 private fun InfoCard(icon: ImageVector, title: String, description: String) {
     SectionCard {
@@ -259,7 +249,6 @@ private fun InfoCard(icon: ImageVector, title: String, description: String) {
     }
 }
 
-/** 支持平台卡片 */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun PlatformCard() {
@@ -314,7 +303,6 @@ private fun PlatformCard() {
     }
 }
 
-/** 功能特性卡片 */
 @Composable
 private fun FeatureCard() {
     val features = listOf(
@@ -360,7 +348,6 @@ private fun FeatureCard() {
     }
 }
 
-/** 技术栈卡片 */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TechCard() {
@@ -397,7 +384,6 @@ private fun TechCard() {
     }
 }
 
-/** 免责声明卡片 */
 @Composable
 private fun DisclaimerCard() {
     SectionCard {
@@ -424,7 +410,6 @@ private fun DisclaimerCard() {
     }
 }
 
-/** 重新预览欢迎界面入口 */
 @Composable
 private fun PreviewOnboardingCard(onClick: () -> Unit) {
     Card(
@@ -477,7 +462,6 @@ private fun PreviewOnboardingCard(onClick: () -> Unit) {
     }
 }
 
-/** 卡片容器统一风格 */
 @Composable
 private fun SectionCard(content: @Composable () -> Unit) {
     Card(
@@ -491,7 +475,6 @@ private fun SectionCard(content: @Composable () -> Unit) {
     }
 }
 
-/** 卡片图标圆形底 */
 @Composable
 private fun CardIcon(icon: ImageVector) {
     Surface(
@@ -510,7 +493,6 @@ private fun CardIcon(icon: ImageVector) {
     }
 }
 
-/** 开源仓库入口卡片 */
 @Composable
 private fun GitHubCard(context: android.content.Context) {
     Card(
@@ -565,7 +547,8 @@ private fun GitHubCard(context: android.content.Context) {
             )
         }
     }
-}/** QQ交流群入口卡片 */
+}
+
 @Composable
 private fun QQGroupCard(context: android.content.Context) {
     Card(
@@ -596,7 +579,7 @@ private fun QQGroupCard(context: android.content.Context) {
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        imageVector = Icons.Outlined.Chat,
+                        imageVector = Icons.Outlined.Group,
                         contentDescription = null,
                         modifier = Modifier.size(20.dp),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer
@@ -611,7 +594,7 @@ private fun QQGroupCard(context: android.content.Context) {
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "点击加入QQ群",
+                    text = "群号：1092123682",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
