@@ -164,8 +164,6 @@ fun AboutScreen(
 
             // ---------- 开源仓库 ----------
             GitHubCard(context)
-            Spacer(modifier = Modifier.height(10.dp))
-            QQGroupCard(context)
 
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -553,65 +551,6 @@ private fun GitHubCard(context: android.content.Context) {
                 )
                 Text(
                     text = "github.com/Wuaqingzhi/YueYing",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Icon(
-                imageVector = Icons.Outlined.OpenInNew,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-                tint = MaterialTheme.colorScheme.outline
-            )
-        }
-    }
-}/** QQ交流群入口卡片 */
-@Composable
-private fun QQGroupCard(context: android.content.Context) {
-    Card(
-        onClick = {
-            val qqGroupUrl = "https://qun.qq.com/universal-share/share?ac=1&authKey=OVh75C%2Bz6SruzzD2ZRLTYvS9Z0dOQSSl5YChSh4qemN6qvY2tf%2FiY564j3CPRncg&busi_data=eyJncm91cENvZGUiOiIxMDkyMTIzNjgyIiwidG9rZW4iOiJsMU10Ujg0M3BIVVF1VVczWUxxUTdIeHlmYVYxQmc3TEpvVzV1SnBzdEhHQklvNmhmNjExTVYzbU5EdWNaM09xIiwidWluIjoiMzk5MDI3MDc3MSJ9&data=ptftMD_TCpOrcLiVbtTfFcKMxaiJ8FwKdK8WhrWe_7NE6ExVwNfos2lNPYquIFfErNOOTBy0DduFUDsr1U-afQ&svctype=4&tempid=h5_group_info"
-            try {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(qqGroupUrl))
-                context.startActivity(intent)
-            } catch (e: Exception) {
-            }
-        },
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                modifier = Modifier.size(40.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Outlined.Chat,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.width(14.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "QQ交流群",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = "点击加入QQ群",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
