@@ -91,7 +91,7 @@ import java.io.File
 import java.io.FileOutputStream
 
 /**
- * 支持开发页：展示微信捐赠码（可保存到相册）。
+ * 支持开发页：展示赞赏码（可保存到相册）。
  * Material3 风格：渐变头部 + 卡片展示二维码 + 感谢语 + 保存按钮。
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -102,9 +102,7 @@ fun SupportScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    // 保存到相册成功状态（覆盖层内全局 Snackbar 可能被遮挡，用本地状态兜底反馈）
     var saved by remember { mutableStateOf(false) }
-    // Android 9- 保存到公共 Pictures 需 WRITE_EXTERNAL_STORAGE 运行时授权
     var pendingPermission by remember { mutableStateOf<kotlinx.coroutines.CompletableDeferred<Boolean>?>(null) }
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -112,7 +110,6 @@ fun SupportScreen(
         pendingPermission?.complete(granted)
         pendingPermission = null
     }
-    // 系统返回键 → 返回设置页
     BackHandler { onBack() }
 
     Scaffold(
@@ -188,7 +185,7 @@ fun SupportScreen(
                 }
             }
 
-            // ---------- 微信捐赠码卡片 ----------
+            // ---------- 赞赏码卡片 ----------
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large,
@@ -211,64 +208,7 @@ fun SupportScreen(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "微信扫码捐赠",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // 二维码图片（白底圆角卡片内展示）
-                    Surface(
-                        modifier = Modifier.size(240.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surface,
-                        shadowElevation = 4.dp
-                    ) {
-                        Image(
-                            painter = painterResource(R.drawable.weixin),
-                            contentDescription = "微信捐赠码",
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(10.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "保存二维码到相册后，打开微信「扫一扫」即可捐赠",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-
-            // ---------- 支付宝捐赠码卡片 ----------
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.large,
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Outlined.Favorite,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "支付宝扫码捐赠",
+                            text = "赞赏码",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Medium
                         )
@@ -282,8 +222,8 @@ fun SupportScreen(
                         shadowElevation = 4.dp
                     ) {
                         Image(
-                            painter = painterResource(R.drawable.alipay),
-                            contentDescription = "支付宝捐赠码",
+                            painter = painterResource(R.drawable.shang),
+                            contentDescription = "赞赏码",
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(10.dp),
@@ -293,7 +233,7 @@ fun SupportScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "保存二维码到相册后，打开支付宝「扫一扫」即可捐赠",
+                        text = "保存赞赏码到相册后，打开微信「扫一扫」即可赞赏",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
@@ -346,7 +286,6 @@ fun SupportScreen(
             Button(
                 onClick = {
                     scope.launch {
-                        // Android 9- 保存相册前检查并动态申请存储权限
                         val granted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                             true
                         } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
@@ -363,13 +302,9 @@ fun SupportScreen(
                             SnackbarController.show("未授予存储权限，无法保存到相册")
                             return@launch
                         }
-                        val okWx = withContext(Dispatchers.IO) {
-                            saveQrToGallery(context, R.drawable.weixin, "yueying_wechat_qr")
+                        val ok = withContext(Dispatchers.IO) {
+                            saveQrToGallery(context, R.drawable.shang, "yueying_shang_qr")
                         }
-                        val okAli = withContext(Dispatchers.IO) {
-                            saveQrToGallery(context, R.drawable.alipay, "yueying_alipay_qr")
-                        }
-                        val ok = okWx && okAli
                         if (ok) saved = true
                         SnackbarController.show(if (ok) "已保存到相册（Pictures/YueYing）" else "保存失败")
                     }
@@ -386,7 +321,6 @@ fun SupportScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(if (saved) "已保存到相册" else "保存到相册")
             }
-            // 保存成功本地反馈（避免覆盖层遮挡全局 Snackbar 时无提示）
             if (saved) {
                 Text(
                     text = "✓ 二维码已保存到 相册/Pictures/YueYing",
@@ -426,7 +360,6 @@ private fun saveQrToGallery(context: Context, drawableId: Int, namePrefix: Strin
         )
         true
     } else {
-        // Android 10 以下：写入公共 Pictures 目录（需 WRITE_EXTERNAL_STORAGE 权限）
         val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
         if (!dir.exists()) dir.mkdirs()
         val file = File(dir, fileName)
