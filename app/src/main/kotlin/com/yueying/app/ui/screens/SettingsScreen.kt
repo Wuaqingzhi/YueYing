@@ -56,6 +56,7 @@ import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Article
 import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.CloudSync
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Layers
@@ -205,6 +206,8 @@ fun SettingsScreen(
     var keepLocked by remember { mutableStateOf(settingsRepo.keepDownloadWhenLocked) }
     var showSpeed by remember { mutableStateOf(settingsRepo.notificationShowSpeed) }
     var showBatteryDialog by remember { mutableStateOf(false) }
+    // v2.3.3 云同步：同步云端开关
+    var syncCloud by remember { mutableStateOf(settingsRepo.syncCloudEnabled) }
     // 通知是否可用（areNotificationsEnabled 不是 Compose 状态源，手动提升为状态，
     // 权限回调/从系统设置返回时刷新，保证副标题文案即时同步）
     var notificationsEnabled by remember {
@@ -305,6 +308,26 @@ fun SettingsScreen(
                 onDismiss = { showAccountDialog = false }
             )
         }
+
+        // v2.3.3 同步云端：默认关闭；开启后网盘账号自动上传云端，换机/重装登录自动恢复
+        Spacer(modifier = Modifier.height(8.dp))
+        SettingsItem(
+            icon = Icons.Outlined.CloudSync,
+            title = "同步云端",
+            description = if (syncCloud) "网盘账号自动上传云端，换机登录自动恢复" else "默认关闭，开启后自动同步网盘账号",
+            onClick = {
+                syncCloud = !syncCloud
+                settingsRepo.syncCloudEnabled = syncCloud
+                SnackbarController.show(if (syncCloud) "已开启：网盘账号将自动同步到云端" else "已关闭：网盘账号不再自动同步")
+            },
+            trailing = {
+                Switch(checked = syncCloud, onCheckedChange = {
+                    syncCloud = it
+                    settingsRepo.syncCloudEnabled = it
+                    SnackbarController.show(if (it) "已开启：网盘账号将自动同步到云端" else "已关闭：网盘账号不再自动同步")
+                })
+            }
+        )
 
         // 退出登录确认：退出后清除会话并重启回到登录页
         if (showLogoutDialog) {

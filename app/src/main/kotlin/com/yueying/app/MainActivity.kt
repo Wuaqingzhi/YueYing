@@ -41,8 +41,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import com.yueying.app.crash.CrashHandler
+import com.yueying.app.data.prefs.SettingsRepository
 import com.yueying.app.data.repository.AuthRepository
+import com.yueying.app.data.sync.AccountSyncManager
 import com.yueying.app.ui.MainScreen
 import com.yueying.app.ui.auth.AuthScreen
 import com.yueying.app.ui.screens.SafetyNoticeDialog
@@ -82,7 +86,13 @@ class MainActivity : ComponentActivity() {
                 // v2.0 登录门禁：未登录只显示登录/注册页，登录成功后才进入主界面
                 var loggedIn by remember { mutableStateOf(AuthRepository.isLoggedIn(this)) }
                 if (!loggedIn) {
-                    AuthScreen(onLoggedIn = { loggedIn = true })
+                    AuthScreen(onLoggedIn = {
+                        loggedIn = true
+                        // 登录成功后若已开启「同步云端」，立即把本地网盘账号上传云端
+                        if (SettingsRepository(this).syncCloudEnabled) {
+                            lifecycleScope.launch { AccountSyncManager.pushAll(this@MainActivity) }
+                        }
+                    })
                 } else {
                     MainScreen()
                     SafetyNoticeDialog()

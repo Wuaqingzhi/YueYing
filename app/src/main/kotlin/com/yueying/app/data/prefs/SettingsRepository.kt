@@ -80,9 +80,9 @@ class SettingsRepository(context: Context) {
             prefs.edit().putInt("download_retry_count", value.coerceIn(0, 10)).apply()
         }
 
-    /** 锁屏后保持下载：开启后下载时获取 WakeLock，并可引导加入「忽略电池优化」白名单（默认开启） */
+    /** 锁屏后保持下载：开启后下载时获取 WakeLock，并可引导加入「忽略电池优化」白名单（默认关闭） */
     var keepDownloadWhenLocked: Boolean
-        get() = prefs.getBoolean("keep_download_when_locked", true)
+        get() = prefs.getBoolean("keep_download_when_locked", false)
         set(value) {
             prefs.edit().putBoolean("keep_download_when_locked", value).apply()
         }
@@ -134,6 +134,13 @@ class SettingsRepository(context: Context) {
         get() = prefs.getLong("theme_seed_color", DEFAULT_SEED_COLOR)
         set(value) {
             prefs.edit().putLong("theme_seed_color", value).apply()
+        }
+
+    /** 网盘账号云端同步：开启后网盘账号自动上传云端，换机/重装登录自动恢复（默认关闭） */
+    var syncCloudEnabled: Boolean
+        get() = prefs.getBoolean("sync_cloud_enabled", false)
+        set(value) {
+            prefs.edit().putBoolean("sync_cloud_enabled", value).apply()
         }
 
     companion object {

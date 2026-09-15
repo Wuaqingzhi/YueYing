@@ -198,8 +198,10 @@ fun MainScreen() {
         }
     }
 
-    // 网盘账号云端同步（v2.3.2）：启动时从云端恢复网盘账号；监听本地网盘账号变化自动上传云端
+    // 网盘账号云端同步（v2.3.3，设置-同步云端开关控制，默认关闭）：开启时启动拉取恢复 + 监听网盘账号变化自动上传
     LaunchedEffect(Unit) {
+        val settings = SettingsRepository(context)
+        if (!settings.syncCloudEnabled) return@LaunchedEffect
         AccountSyncManager.pullAndRestore(context)
         val syncDb = AppDatabase.get(context)
         listOf(
