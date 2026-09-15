@@ -19,38 +19,49 @@
 
 package com.yueying.app.ui.screens
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Download
-import androidx.compose.material.icons.outlined.SystemUpdate
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import com.yueying.app.R
 import com.yueying.app.data.update.UpdateChecker
 
 /**
- * 发现新版本弹窗（Material3）：
- * 标题 + 当前/最新版本 + 更新说明（可滚动）+ 下载更新 / 稍后 / 忽略本次。
+ * 发现新版本弹窗（精致卡片版）：
+ * 渐变横幅 + App 图标 + 版本徽标 + 更新说明 + 渐变主按钮。
  */
 @Composable
 fun UpdateDialog(
@@ -63,116 +74,225 @@ fun UpdateDialog(
     /** 使用镜像站下载（可选）；为 null 时不显示镜像站按钮 */
     onDownloadMirror: (() -> Unit)? = null
 ) {
-    AlertDialog(
-        onDismissRequest = onLater,
-        icon = {
-            Surface(
-                modifier = Modifier.size(48.dp),
-                shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                androidx.compose.foundation.layout.Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.padding(4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.SystemUpdate,
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-        },
-        title = {
+    val primary = MaterialTheme.colorScheme.primary
+    val secondary = MaterialTheme.colorScheme.secondary
+    val surface = MaterialTheme.colorScheme.surface
+
+    Dialog(onDismissRequest = onLater) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = surface,
+            tonalElevation = 8.dp,
+            shadowElevation = 16.dp,
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Column {
-                Text(
-                    text = "发现新版本",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                // ===== 顶部渐变横幅 =====
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                        .background(
+                            Brush.linearGradient(
+                                colors = listOf(primary, secondary)
+                            )
+                        )
+                ) {
+                    // 装饰圆
+                    Box(
+                        modifier = Modifier
+                            .size(140.dp)
+                            .align(Alignment.TopEnd)
+                            .offset(x = 40.dp, y = (-56).dp)
+                            .background(Color.White.copy(alpha = 0.10f), CircleShape)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .align(Alignment.BottomStart)
+                            .offset(x = (-20).dp, y = 30.dp)
+                            .background(Color.White.copy(alpha = 0.08f), CircleShape)
+                    )
+                    // App 图标
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .size(76.dp)
+                            .clip(CircleShape)
+                            .background(Color.White)
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.yy_logo),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(10.dp)
+                        )
+                    }
+                    // NEW 徽标
+                    Surface(
+                        shape = CircleShape,
+                        color = Color(0xFFFF7043),
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .offset(x = 28.dp, y = (-28).dp)
+                    ) {
+                        Text(
+                            text = "NEW",
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
+                }
+
+                // ===== 内容区 =====
+                Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+                    Spacer(Modifier.height(18.dp))
                     Text(
-                        text = release.tagName,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
+                        text = "发现新版本",
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(Modifier.height(8.dp))
+
+                    // 版本信息行
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primaryContainer
+                        ) {
+                            Text(
+                                text = release.tagName,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
+                            )
+                        }
+                        Spacer(Modifier.width(10.dp))
+                        Text(
+                            text = "当前版本 $currentVersion",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    // 更新说明
                     Text(
-                        text = "当前 $currentVersion",
+                        text = "更新内容",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                }
-            }
-        },
-        text = {
-            Column {
-                Text(
-                    text = "更新内容",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                // 更新说明（可滚动，防止长文本撑爆弹窗）
-                Surface(
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.surfaceContainerLow
-                ) {
-                    Text(
-                        text = release.body.ifBlank { "暂无更新说明" },
+                    Spacer(Modifier.height(6.dp))
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerLow
+                    ) {
+                        Text(
+                            text = release.body.ifBlank { "暂无更新说明" },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(120.dp)
+                                .verticalScroll(rememberScrollState())
+                                .padding(14.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            lineHeight = 20.sp
+                        )
+                    }
+
+                    Spacer(Modifier.height(20.dp))
+
+                    // ===== 主按钮（渐变）=====
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(160.dp)
-                            .verticalScroll(rememberScrollState())
-                            .padding(12.dp),
-                        style = MaterialTheme.typography.bodySmall,
-                        lineHeight = 20.sp
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            Column(horizontalAlignment = Alignment.End) {
-                Button(
-                    onClick = onDownload,
-                    enabled = !downloading
-                ) {
-                    if (downloading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("下载中…")
-                    } else {
-                        Icon(
-                            imageVector = Icons.Outlined.Download,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("下载更新")
+                            .height(50.dp)
+                            .clip(RoundedCornerShape(25.dp))
+                            .background(
+                                Brush.linearGradient(colors = listOf(primary, secondary))
+                            )
+                            .clickable(enabled = !downloading, onClick = onDownload),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (downloading) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
+                                    color = Color.White
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text("下载中…", color = Color.White, fontWeight = FontWeight.SemiBold)
+                            }
+                        } else {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Download,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = Color.White
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text("下载更新", color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                            }
+                        }
                     }
-                }
-                if (onDownloadMirror != null) {
-                    TextButton(onClick = onDownloadMirror) {
-                        Text("使用镜像站下载", color = MaterialTheme.colorScheme.primary)
+
+                    // 镜像站
+                    if (onDownloadMirror != null) {
+                        Spacer(Modifier.height(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(25.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                .clickable(onClick = onDownloadMirror),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "使用镜像站下载",
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(vertical = 12.dp)
+                            )
+                        }
                     }
-                }
-            }
-        },
-        dismissButton = {
-            Row {
-                TextButton(onClick = onIgnore) {
-                    Text("忽略本次", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                TextButton(onClick = onLater) {
-                    Text("稍后")
+
+                    Spacer(Modifier.height(6.dp))
+
+                    // ===== 忽略 / 稍后 =====
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Surface(
+                            color = Color.Transparent,
+                            onClick = onIgnore
+                        ) {
+                            Text(
+                                text = "忽略本次",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                            )
+                        }
+                        Surface(
+                            color = Color.Transparent,
+                            onClick = onLater
+                        ) {
+                            Text(
+                                text = "稍后再说",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(12.dp))
                 }
             }
         }
-    )
+    }
 }

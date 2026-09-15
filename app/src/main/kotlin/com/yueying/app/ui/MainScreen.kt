@@ -95,6 +95,7 @@ import com.yueying.app.data.network.UCApi
 import com.yueying.app.data.network.XunleiApi
 import com.yueying.app.data.prefs.SettingsRepository
 import com.yueying.app.data.update.UpdateChecker
+import com.yueying.app.data.sync.AccountSyncManager
 import com.yueying.app.data.repository.BaiduAccountRepository
 import com.yueying.app.data.repository.BaiduResolveRepository
 import com.yueying.app.data.repository.C139AccountRepository
@@ -185,19 +186,33 @@ fun MainScreen() {
         showOnboarding = !prefs.getBoolean("onboarding_shown", false)
     }
 
-    // 更新检测：请求 GitHub 最新 Release（仓库无 Release / 网络失败则不提示）
+    // 更新检测：每次进入 App 自动检查 GitHub 最新 Release（有新版即弹窗；网络失败则不提示）
     var showUpdateDialog by remember { mutableStateOf(false) }
     var pendingRelease by remember { mutableStateOf<UpdateChecker.Release?>(null) }
     LaunchedEffect(Unit) {
         val release = UpdateChecker.fetchLatestRelease() ?: return@LaunchedEffect
         val current = UpdateChecker.currentVersion(context)
-        val prefs = context.getSharedPreferences("yueying_prefs", android.content.Context.MODE_PRIVATE)
-        val ignored = prefs.getString("ignored_version", "")
-        if (UpdateChecker.compareVersions(release.tagName, current) > 0 &&
-            release.tagName != ignored
-        ) {
+        if (UpdateChecker.compareVersions(release.tagName, current) > 0) {
             pendingRelease = release
             showUpdateDialog = true
+        }
+    }
+
+    // 网盘账号云端同步（v2.3.2）：启动时从云端恢复网盘账号；监听本地网盘账号变化自动上传云端
+    LaunchedEffect(Unit) {
+        AccountSyncManager.pullAndRestore(context)
+        val syncDb = AppDatabase.get(context)
+        listOf(
+            syncDb.quarkAccountDao().observeAccount(),
+            syncDb.ucAccountDao().observeAccount(),
+            syncDb.xunleiAccountDao().observeAccount(),
+            syncDb.baiduAccountDao().observeAccount(),
+            syncDb.c139AccountDao().observeAccount(),
+            syncDb.pan123AccountDao().observeAccount()
+        ).forEach { flow ->
+            launch {
+                flow.collect { AccountSyncManager.pushAll(context) }
+            }
         }
     }
     val api = remember { QuarkApi() }
@@ -882,13 +897,7 @@ fun MainScreen() {
                     }
                 },
                 onLater = { showUpdateDialog = false },
-                onIgnore = {
-                    context.getSharedPreferences("yueying_prefs", android.content.Context.MODE_PRIVATE)
-                        .edit()
-                        .putString("ignored_version", release.tagName)
-                        .apply()
-                    showUpdateDialog = false
-                }
+                onIgnore = { showUpdateDialog = false }
             )
         }
     }
