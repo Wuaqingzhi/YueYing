@@ -19,6 +19,7 @@
 
 package com.yueying.app.ui.screens
 import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
@@ -40,6 +41,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
@@ -48,6 +50,9 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Article
 import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material.icons.outlined.ChevronRight
@@ -70,7 +75,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
@@ -96,6 +103,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -105,10 +113,12 @@ import com.yueying.app.data.backup.AuthCrypto
 import com.yueying.app.data.download.DownloadPlatform
 import com.yueying.app.data.download.DownloadSaver
 import com.yueying.app.data.prefs.SettingsRepository
+import com.yueying.app.data.repository.AuthRepository
 import com.yueying.app.data.update.UpdateChecker
 import com.yueying.app.ui.SnackbarController
 import com.yueying.app.util.LogExporter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -180,6 +190,10 @@ fun SettingsScreen(
     val settingsRepo = remember { SettingsRepository(context) }
     var downloadDirUri by remember { mutableStateOf(settingsRepo.downloadDirUri) }
     var showDevMenu by remember { mutableStateOf(false) }
+    // v2.0 账号：退出登录确认弹窗
+    var showLogoutDialog by remember { mutableStateOf(false) }
+    // v2.2.1 账号：账号信息 + 修改密码弹窗
+    var showAccountDialog by remember { mutableStateOf(false) }
     // 网络与下载策略（本地状态驱动 UI，同时同步 SharedPreferences）
     var maxConcurrent by remember { mutableStateOf(settingsRepo.maxConcurrentDownloads) }
     var speedLimitBps by remember { mutableStateOf(settingsRepo.downloadSpeedLimit) }
@@ -272,6 +286,54 @@ fun SettingsScreen(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
+        // ===== v2.0 账号区块 =====
+        SectionLabel("账号")
+        SettingsItem(
+            icon = Icons.Outlined.AccountCircle,
+            title = "当前账号",
+            description = AuthRepository.currentEmail(context) ?: "未登录",
+            onClick = { showAccountDialog = true },
+            trailing = {
+                TextButton(onClick = { showLogoutDialog = true }) { Text("退出登录") }
+            }
+        )
+
+        // 账号信息 + 修改密码弹窗（修改前需邮箱验证码验证）
+        if (showAccountDialog) {
+            AccountInfoDialog(
+                email = AuthRepository.currentEmail(context) ?: "",
+                onDismiss = { showAccountDialog = false }
+            )
+        }
+
+        // 退出登录确认：退出后清除会话并重启回到登录页
+        if (showLogoutDialog) {
+            AlertDialog(
+                onDismissRequest = { showLogoutDialog = false },
+                title = { Text("退出登录") },
+                text = { Text("退出后需重新登录才能使用解析与下载功能，确认退出？") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showLogoutDialog = false
+                        AuthRepository.logout(context)
+                        val activity = context as? Activity
+                        if (activity != null) {
+                            activity.finish()
+                        }
+                        val intent = context.packageManager
+                            .getLaunchIntentForPackage(context.packageName)
+                            ?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+                        if (intent != null) context.startActivity(intent)
+                    }) { Text("退出") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showLogoutDialog = false }) { Text("取消") }
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         SectionLabel("下载")
         SettingsItem(
             icon = Icons.Outlined.Tune,
@@ -994,6 +1056,169 @@ fun SettingsScreen(
             }
         )
     }
+}
+
+/** 账号信息 + 修改密码弹窗：显示当前账号，修改密码前需发送验证码到当前邮箱验证 */
+@Composable
+private fun AccountInfoDialog(
+    email: String,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val repo = remember { AuthRepository(context) }
+
+    var code by remember { mutableStateOf("") }
+    var newPass by remember { mutableStateOf("") }
+    var newConfirm by remember { mutableStateOf("") }
+    var showPass by remember { mutableStateOf(false) }
+    var sending by remember { mutableStateOf(false) }
+    var submitting by remember { mutableStateOf(false) }
+    var countdown by remember { mutableStateOf(0) }
+
+    // 发送验证码 60s 倒计时
+    LaunchedEffect(countdown) {
+        if (countdown > 0) {
+            delay(1000)
+            countdown -= 1
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("账号信息") },
+        text = {
+            // 横屏/小屏时内容超高可滚动
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 480.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "当前账号：$email",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "修改密码需先向当前邮箱发送验证码，验证通过后才能重置。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline
+                )
+                // 验证码 + 发送按钮
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = code,
+                        onValueChange = { code = it.filter(Char::isDigit).take(6) },
+                        modifier = Modifier.weight(1f),
+                        label = { Text("验证码") },
+                        placeholder = { Text("6 位数字") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    OutlinedButton(
+                        onClick = {
+                            if (sending || countdown > 0) return@OutlinedButton
+                            scope.launch {
+                                sending = true
+                                when (val r = repo.sendCode(email)) {
+                                    is AuthRepository.AuthResult.Success -> {
+                                        SnackbarController.show("验证码已发送，请查收邮箱")
+                                        countdown = 60
+                                    }
+                                    is AuthRepository.AuthResult.Error ->
+                                        SnackbarController.show(r.message)
+                                }
+                                sending = false
+                            }
+                        },
+                        enabled = !sending && countdown == 0,
+                        modifier = Modifier.height(56.dp)
+                    ) {
+                        Text(
+                            if (countdown > 0) "${countdown}s"
+                            else if (sending) "发送中"
+                            else "发送验证码"
+                        )
+                    }
+                }
+                // 新密码
+                OutlinedTextField(
+                    value = newPass,
+                    onValueChange = { newPass = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("新密码（至少 8 位）") },
+                    singleLine = true,
+                    visualTransformation = if (showPass) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { showPass = !showPass }) {
+                            Icon(
+                                imageVector = if (showPass) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                contentDescription = if (showPass) "隐藏密码" else "显示密码"
+                            )
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                )
+                // 确认新密码
+                OutlinedTextField(
+                    value = newConfirm,
+                    onValueChange = { newConfirm = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("确认新密码") },
+                    singleLine = true,
+                    visualTransformation = if (showPass) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { showPass = !showPass }) {
+                            Icon(
+                                imageVector = if (showPass) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                contentDescription = if (showPass) "隐藏密码" else "显示密码"
+                            )
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (submitting) return@Button
+                    scope.launch {
+                        submitting = true
+                        when (val r = repo.resetPassword(email, code, newPass, newConfirm)) {
+                            is AuthRepository.AuthResult.Success -> {
+                                SnackbarController.show("密码修改成功")
+                                onDismiss()
+                            }
+                            is AuthRepository.AuthResult.Error ->
+                                SnackbarController.show(r.message)
+                        }
+                        submitting = false
+                    }
+                },
+                enabled = !submitting
+            ) {
+                if (submitting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("确认修改")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("关闭") }
+        }
+    )
 }
 
 /** 导出网盘认证弹窗：AES 加密密码 + 导出范围（仅已登录 / 全部绑定） */

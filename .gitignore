@@ -26,3 +26,6 @@ local.properties
 keystore.properties
 workspace.json
 *.bak
+
+# 构建日志
+release_build*.log

@@ -36,12 +36,15 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.yueying.app.crash.CrashHandler
+import com.yueying.app.data.repository.AuthRepository
 import com.yueying.app.ui.MainScreen
+import com.yueying.app.ui.auth.AuthScreen
 import com.yueying.app.ui.screens.SafetyNoticeDialog
 import com.yueying.app.ui.theme.ComposeEmptyActivityTheme
 import com.yueying.app.util.ArchiveProbe
@@ -76,11 +79,17 @@ class MainActivity : ComponentActivity() {
         }
         setContent {
             ComposeEmptyActivityTheme {
-                MainScreen()
-                SafetyNoticeDialog()
-                // 通知被禁用引导（Android 13+ 授权后仍被关 / 低版本被系统或用户关闭）
-                if (showNotificationGuide) {
-                    NotificationPermissionDialog(onDismiss = { showNotificationGuide = false })
+                // v2.0 登录门禁：未登录只显示登录/注册页，登录成功后才进入主界面
+                var loggedIn by remember { mutableStateOf(AuthRepository.isLoggedIn(this)) }
+                if (!loggedIn) {
+                    AuthScreen(onLoggedIn = { loggedIn = true })
+                } else {
+                    MainScreen()
+                    SafetyNoticeDialog()
+                    // 通知被禁用引导（Android 13+ 授权后仍被关 / 低版本被系统或用户关闭）
+                    if (showNotificationGuide) {
+                        NotificationPermissionDialog(onDismiss = { showNotificationGuide = false })
+                    }
                 }
             }
         }

@@ -29,8 +29,8 @@ import com.yueying.app.data.security.AndroidKeystoreCredentialCipher
 import com.yueying.app.data.security.CredentialCipher
 
 @Database(
-    entities = [QuarkAccountEntity::class, DownloadTaskEntity::class, UCAccountEntity::class, XunleiAccountEntity::class, BaiduAccountEntity::class, C139AccountEntity::class, Pan123AccountEntity::class, BookmarkEntity::class],
-    version = 13,
+    entities = [QuarkAccountEntity::class, DownloadTaskEntity::class, UCAccountEntity::class, XunleiAccountEntity::class, BaiduAccountEntity::class, C139AccountEntity::class, Pan123AccountEntity::class, BookmarkEntity::class, UserEntity::class],
+    version = 14,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -50,6 +50,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun rawPan123AccountDao(): Pan123AccountDao
 
     abstract fun bookmarkDao(): BookmarkDao
+
+    abstract fun userDao(): UserDao
 
     private lateinit var credentialCipher: CredentialCipher
 
@@ -71,7 +73,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "yueying.db"
                 )
-                    .addMigrations(MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13)
+                    .addMigrations(MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14)
                     // 早期开发版（1-8）无可靠 schema；从 v9 起必须保留凭证和下载任务
                     .fallbackToDestructiveMigrationFrom(1, 2, 3, 4, 5, 6, 7, 8)
                     .build()
@@ -113,6 +115,18 @@ abstract class AppDatabase : RoomDatabase() {
                         "`pwd` TEXT NOT NULL, " +
                         "`category` TEXT NOT NULL, " +
                         "`createTime` INTEGER NOT NULL)"
+                )
+            }
+        }
+
+        private val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `yy_user` (" +
+                        "`email` TEXT NOT NULL PRIMARY KEY, " +
+                        "`passHash` TEXT NOT NULL, " +
+                        "`salt` TEXT NOT NULL, " +
+                        "`createdAt` INTEGER NOT NULL)"
                 )
             }
         }
