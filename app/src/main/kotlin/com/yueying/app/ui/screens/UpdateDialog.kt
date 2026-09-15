@@ -210,8 +210,8 @@ fun UpdateDialog(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp)
-                            .clip(RoundedCornerShape(25.dp))
+                            .height(52.dp)
+                            .clip(RoundedCornerShape(26.dp))
                             .background(
                                 Brush.linearGradient(colors = listOf(primary, secondary))
                             )
@@ -242,13 +242,14 @@ fun UpdateDialog(
                         }
                     }
 
-                    // 镜像站
+                    // 镜像站（独立一行，固定高度，文字垂直居中）
                     if (onDownloadMirror != null) {
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(10.dp))
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(25.dp))
+                                .height(46.dp)
+                                .clip(RoundedCornerShape(23.dp))
                                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                                 .clickable(onClick = onDownloadMirror),
                             contentAlignment = Alignment.Center
@@ -257,14 +258,14 @@ fun UpdateDialog(
                                 text = "使用镜像站下载",
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Medium,
-                                modifier = Modifier.padding(vertical = 12.dp)
+                                fontSize = 14.sp
                             )
                         }
                     }
 
-                    Spacer(Modifier.height(6.dp))
+                    Spacer(Modifier.height(10.dp))
 
-                    // ===== 忽略 / 稍后 =====
+                    // ===== 忽略 / 稍后（底部独立一行）=====
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
@@ -276,7 +277,8 @@ fun UpdateDialog(
                             Text(
                                 text = "忽略本次",
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                                fontSize = 13.sp,
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                             )
                         }
                         Surface(
@@ -286,7 +288,8 @@ fun UpdateDialog(
                             Text(
                                 text = "稍后再说",
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                                fontSize = 13.sp,
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                             )
                         }
                     }

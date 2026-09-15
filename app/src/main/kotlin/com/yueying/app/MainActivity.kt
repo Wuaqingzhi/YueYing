@@ -44,10 +44,12 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import com.yueying.app.crash.CrashHandler
+import com.yueying.app.data.db.AppDatabase
 import com.yueying.app.data.prefs.SettingsRepository
 import com.yueying.app.data.repository.AuthRepository
 import com.yueying.app.data.sync.AccountSyncManager
 import com.yueying.app.ui.MainScreen
+import com.yueying.app.ui.SnackbarController
 import com.yueying.app.ui.auth.AuthScreen
 import com.yueying.app.ui.screens.SafetyNoticeDialog
 import com.yueying.app.ui.theme.ComposeEmptyActivityTheme
@@ -81,6 +83,31 @@ class MainActivity : ComponentActivity() {
                 CrashHandler.terminate(hits.joinToString(","))
             }
         }
+        // 网盘账号云端同步（v2.3.4）：进程内常驻监听，开启「同步云端」后网盘账号变化自动上传，成功/失败均有提示
+        lifecycleScope.launch {
+            val syncDb = AppDatabase.get(this@MainActivity)
+            listOf(
+                syncDb.quarkAccountDao().observeAccount(),
+                syncDb.ucAccountDao().observeAccount(),
+                syncDb.xunleiAccountDao().observeAccount(),
+                syncDb.baiduAccountDao().observeAccount(),
+                syncDb.c139AccountDao().observeAccount(),
+                syncDb.pan123AccountDao().observeAccount()
+            ).forEach { flow ->
+                launch {
+                    var first = true
+                    flow.collect {
+                        if (first) { first = false; return@collect }
+                        val ctx = this@MainActivity
+                        if (AuthRepository.currentToken(ctx) == null) return@collect
+                        if (!SettingsRepository(ctx).syncCloudEnabled) return@collect
+                        val ok = AccountSyncManager.pushAll(ctx)
+                        if (ok) SnackbarController.show("网盘账号已同步到云端")
+                        else SnackbarController.show("云端同步失败，请检查网络")
+                    }
+                }
+            }
+        }
         setContent {
             ComposeEmptyActivityTheme {
                 // v2.0 登录门禁：未登录只显示登录/注册页，登录成功后才进入主界面
@@ -90,7 +117,11 @@ class MainActivity : ComponentActivity() {
                         loggedIn = true
                         // 登录成功后若已开启「同步云端」，立即把本地网盘账号上传云端
                         if (SettingsRepository(this).syncCloudEnabled) {
-                            lifecycleScope.launch { AccountSyncManager.pushAll(this@MainActivity) }
+                            lifecycleScope.launch {
+                                val ok = AccountSyncManager.pushAll(this@MainActivity)
+                                if (ok) SnackbarController.show("网盘账号已同步到云端")
+                                else SnackbarController.show("云端同步失败，请检查网络")
+                            }
                         }
                     })
                 } else {

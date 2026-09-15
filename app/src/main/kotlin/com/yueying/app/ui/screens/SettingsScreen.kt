@@ -115,6 +115,7 @@ import com.yueying.app.data.download.DownloadPlatform
 import com.yueying.app.data.download.DownloadSaver
 import com.yueying.app.data.prefs.SettingsRepository
 import com.yueying.app.data.repository.AuthRepository
+import com.yueying.app.data.sync.AccountSyncManager
 import com.yueying.app.data.update.UpdateChecker
 import com.yueying.app.ui.SnackbarController
 import com.yueying.app.util.LogExporter
@@ -318,13 +319,31 @@ fun SettingsScreen(
             onClick = {
                 syncCloud = !syncCloud
                 settingsRepo.syncCloudEnabled = syncCloud
-                SnackbarController.show(if (syncCloud) "已开启：网盘账号将自动同步到云端" else "已关闭：网盘账号不再自动同步")
+                if (syncCloud) {
+                    scope.launch {
+                        SnackbarController.show("正在同步网盘账号到云端…")
+                        val ok = AccountSyncManager.pushAll(context)
+                        if (ok) SnackbarController.show("网盘账号已同步到云端")
+                        else SnackbarController.show("云端同步失败，请检查网络")
+                    }
+                } else {
+                    SnackbarController.show("已关闭：网盘账号不再自动同步")
+                }
             },
             trailing = {
                 Switch(checked = syncCloud, onCheckedChange = {
                     syncCloud = it
                     settingsRepo.syncCloudEnabled = it
-                    SnackbarController.show(if (it) "已开启：网盘账号将自动同步到云端" else "已关闭：网盘账号不再自动同步")
+                    if (it) {
+                        scope.launch {
+                            SnackbarController.show("正在同步网盘账号到云端…")
+                            val ok = AccountSyncManager.pushAll(context)
+                            if (ok) SnackbarController.show("网盘账号已同步到云端")
+                            else SnackbarController.show("云端同步失败，请检查网络")
+                        }
+                    } else {
+                        SnackbarController.show("已关闭：网盘账号不再自动同步")
+                    }
                 })
             }
         )

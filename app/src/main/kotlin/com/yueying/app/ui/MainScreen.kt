@@ -198,23 +198,28 @@ fun MainScreen() {
         }
     }
 
-    // 网盘账号云端同步（v2.3.3，设置-同步云端开关控制，默认关闭）：开启时启动拉取恢复 + 监听网盘账号变化自动上传
+    // 网盘账号云端同步（v2.3.4，设置-同步云端开关控制，默认关闭）：启动时从云端拉取恢复，成功/失败均有提示
+    // （账号变化自动上传的常驻监听在 MainActivity 进程级执行，保证运行中开关随时生效）
     LaunchedEffect(Unit) {
         val settings = SettingsRepository(context)
         if (!settings.syncCloudEnabled) return@LaunchedEffect
-        AccountSyncManager.pullAndRestore(context)
-        val syncDb = AppDatabase.get(context)
-        listOf(
-            syncDb.quarkAccountDao().observeAccount(),
-            syncDb.ucAccountDao().observeAccount(),
-            syncDb.xunleiAccountDao().observeAccount(),
-            syncDb.baiduAccountDao().observeAccount(),
-            syncDb.c139AccountDao().observeAccount(),
-            syncDb.pan123AccountDao().observeAccount()
-        ).forEach { flow ->
-            launch {
-                flow.collect { AccountSyncManager.pushAll(context) }
-            }
+        // 启动拉取：成功且恢复到了账号时提示
+        val pulled = AccountSyncManager.pullAndRestore(context)
+        if (pulled) {
+            val anyRestored = runCatching {
+                val db = AppDatabase.get(context)
+                listOf(
+                    db.quarkAccountDao().getAccount(),
+                    db.ucAccountDao().getAccount(),
+                    db.xunleiAccountDao().getAccount(),
+                    db.baiduAccountDao().getAccount(),
+                    db.c139AccountDao().getAccount(),
+                    db.pan123AccountDao().getAccount()
+                ).any { it != null }
+            }.getOrDefault(false)
+            if (anyRestored) SnackbarController.show("已从云端恢复网盘账号")
+        } else {
+            SnackbarController.show("云端同步失败，请检查网络")
         }
     }
     val api = remember { QuarkApi() }
