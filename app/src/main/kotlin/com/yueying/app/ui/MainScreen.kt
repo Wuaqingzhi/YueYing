@@ -34,10 +34,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Bookmarks
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -173,6 +176,9 @@ fun MainScreen() {
     var showSupport by rememberSaveable { mutableStateOf(false) }
     var showTheme by rememberSaveable { mutableStateOf(false) }
     var showBookmarks by rememberSaveable { mutableStateOf(false) }
+    var showAnnouncements by rememberSaveable { mutableStateOf(false) }
+    var announcementList by remember { mutableStateOf<List<com.yueying.app.data.announcement.AnnouncementApi.Announcement>>(emptyList()) }
+    var showStartDialog by remember { mutableStateOf<com.yueying.app.data.announcement.AnnouncementApi.Announcement?>(null) }
     val saveableStateHolder = rememberSaveableStateHolder()
 
     val context = LocalContext.current
@@ -195,6 +201,21 @@ fun MainScreen() {
         if (UpdateChecker.compareVersions(release.tagName, current) > 0) {
             pendingRelease = release
             showUpdateDialog = true
+        }
+    }
+
+    // 公告：启动时拉取，有未读就弹窗
+    LaunchedEffect(Unit) {
+        when (val r = com.yueying.app.data.announcement.AnnouncementApi.fetchPage()) {
+            is com.yueying.app.data.announcement.AnnouncementApi.Result.Success -> {
+                announcementList = r.data.list
+                // 找最新未读（简单：没看过的第一条置顶或最新公告弹窗）
+                val prefs = context.getSharedPreferences("yy_announce", android.content.Context.MODE_PRIVATE)
+                val lastRead = prefs.getString("last_read_id", "") ?: ""
+                val unread = r.data.list.filter { it.id != lastRead }
+                if (unread.isNotEmpty()) showStartDialog = unread.first()
+            }
+            else -> {}
         }
     }
 
@@ -632,6 +653,10 @@ fun MainScreen() {
                         Icon(Icons.Outlined.Bookmarks, contentDescription = "收藏网盘链接")
                     }
                 }
+                // 公告铃铛
+                IconButton(onClick = { showAnnouncements = true }) {
+                    Icon(Icons.Outlined.Notifications, contentDescription = "公告")
+                }
             },
             scrollBehavior = scrollBehavior,
             colors = TopAppBarDefaults.largeTopAppBarColors(
@@ -835,6 +860,52 @@ fun MainScreen() {
             }
         )
     }
+
+    // 公告列表弹窗
+    if (showAnnouncements) {
+        AlertDialog(
+            onDismissRequest = { showAnnouncements = false },
+            title = { Text("公告") },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    announcementList.forEach { a ->
+                        Text(
+                            text = a.title,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = a.content,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    if (announcementList.isEmpty()) Text("暂无公告", style = MaterialTheme.typography.bodyMedium)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showAnnouncements = false }) { Text("关闭") }
+            }
+        )
+    }
+
+    // 启动公告弹窗
+    showStartDialog?.let { a ->
+        AlertDialog(
+            onDismissRequest = {
+                context.getSharedPreferences("yy_announce", android.content.Context.MODE_PRIVATE).edit().putString("last_read_id", a.id).apply()
+                showStartDialog = null
+            },
+            title = { Text(a.title) },
+            text = { Text(a.content) },
+            confirmButton = {
+                TextButton(onClick = {
+                    context.getSharedPreferences("yy_announce", android.content.Context.MODE_PRIVATE).edit().putString("last_read_id", a.id).apply()
+                    showStartDialog = null
+                }) { Text("知道了") }
+            }
+        )
     }
 
     // 首次下载引导：加入「忽略电池优化」白名单（锁屏保持下载生效的前提）
