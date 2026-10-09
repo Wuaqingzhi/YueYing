@@ -710,22 +710,22 @@ fun MainScreen() {
 
     // 115网盘登录页
     if (showPan115Login) {
-        Pan115LoginScreen(onBack = { showPan115Login = false }, onSaved = { showPan115Login = false })
+        Pan115LoginScreen(viewModel = pan115ViewModel, onBack = { showPan115Login = false }, onSaved = { showPan115Login = false })
         return
     }
     // 光鸭云盘登录页
     if (showGuangYaLogin) {
-        GuangYaLoginScreen(onBack = { showGuangYaLogin = false }, onSaved = { showGuangYaLogin = false })
+        GuangYaLoginScreen(viewModel = guangyaViewModel, onBack = { showGuangYaLogin = false }, onSaved = { showGuangYaLogin = false })
         return
     }
     // 蓝奏云优享版登录页
     if (showILanzouLogin) {
-        ILanzouLoginScreen(onBack = { showILanzouLogin = false }, onSaved = { showILanzouLogin = false })
+        ILanzouLoginScreen(viewModel = ilanzouViewModel, onBack = { showILanzouLogin = false }, onSaved = { showILanzouLogin = false })
         return
     }
     // 蓝奏云登录页
     if (showLanzouLogin) {
-        LanzouLoginScreen(onBack = { showLanzouLogin = false }, onSaved = { showLanzouLogin = false })
+        LanzouLoginScreen(viewModel = lanzouViewModel, onBack = { showLanzouLogin = false }, onSaved = { showLanzouLogin = false })
         return
     }
 

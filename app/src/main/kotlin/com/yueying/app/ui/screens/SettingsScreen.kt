@@ -294,6 +294,22 @@ fun SettingsScreen(
         SectionLabel("下载")
         SettingsItem(
             icon = Icons.Outlined.Tune,
+            title = "下载引擎",
+            description = if (settingsRepo.downloadEngine == SettingsRepository.ENGINE_GOPEED)
+                "Gopeed 引擎（支持磁力链接/BT下载）"
+            else
+                "内置分片下载器（默认）",
+            onClick = {
+                settingsRepo.downloadEngine = if (settingsRepo.downloadEngine == SettingsRepository.ENGINE_GOPEED)
+                    SettingsRepository.ENGINE_BUILTIN else SettingsRepository.ENGINE_GOPEED
+            },
+            trailing = { Switch(checked = settingsRepo.downloadEngine == SettingsRepository.ENGINE_GOPEED, onCheckedChange = null) }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        SettingsItem(
+            icon = Icons.Outlined.Tune,
             title = "下载线程数",
             description = "按网盘分别设置分片并发数（默认 32，最高 512）",
             onClick = { showThreadsDialog = true }
