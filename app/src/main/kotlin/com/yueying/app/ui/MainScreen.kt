@@ -46,6 +46,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -141,6 +142,7 @@ import com.yueying.app.ui.navigation.MainTab
 import com.yueying.app.ui.screens.AboutScreen
 import com.yueying.app.ui.screens.BookmarkScreen
 import com.yueying.app.ui.screens.DownloadScreen
+import com.yueying.app.ui.screens.DownloadEngineScreen
 import com.yueying.app.ui.screens.DriveScreen
 import com.yueying.app.ui.screens.OnboardingScreen
 import com.yueying.app.ui.screens.ResolveScreen
@@ -204,6 +206,8 @@ fun MainScreen() {
     var showILanzouLogin by rememberSaveable { mutableStateOf(false) }
     var showLanzouLogin by rememberSaveable { mutableStateOf(false) }
     var showAbout by rememberSaveable { mutableStateOf(false) }
+    var showGithubTokenDialog by remember { mutableStateOf(false) }
+    var showEngineScreen by remember { mutableStateOf(false) }
     var showSupport by rememberSaveable { mutableStateOf(false) }
     var showTheme by rememberSaveable { mutableStateOf(false) }
     var showBookmarks by rememberSaveable { mutableStateOf(false) }
@@ -895,7 +899,9 @@ fun MainScreen() {
                         onILanzouLogin = { showILanzouLogin = true },
                         onILanzouLogout = { ilanzouViewModel.logout() },
                         onLanzouLogin = { showLanzouLogin = true },
-                        onLanzouLogout = { lanzouViewModel.logout() }
+                        onLanzouLogout = { lanzouViewModel.logout() },
+                        onGitHubTokenClick = { showGithubTokenDialog = true },
+                        onGitHubBrowseHome = { }
                     )
                     MainTab.Download -> DownloadScreen(scrollBehavior, downloadViewModel)
                     MainTab.Settings -> SettingsScreen(
@@ -904,6 +910,7 @@ fun MainScreen() {
                         onAboutClick = { showAbout = true },
                         onSupportClick = { showSupport = true },
                         backupManager = backupManager,
+                        onEngineClick = { showEngineScreen = true },
                         onDownloadUpdateApk = { url, name ->
                             scope.launch {
                                 downloadManager.enqueue(url = url, fileName = name)
@@ -1033,6 +1040,48 @@ fun MainScreen() {
                 resolveViewModel.startResolve(link, pwd)
             }
         )
+    }
+
+    // GitHub Token 输入弹窗
+    if (showGithubTokenDialog) {
+        var tokenInput by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showGithubTokenDialog = false },
+            title = { Text("配置 GitHub Token") },
+            text = {
+                Column {
+                    Text("输入你的 GitHub Personal Access Token（ghp_ 开头），用于提升 API 限额。", style = MaterialTheme.typography.bodySmall)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = tokenInput,
+                        onValueChange = { tokenInput = it },
+                        label = { Text("Token") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (tokenInput.isNotBlank()) {
+                        com.yueying.app.data.network.GitHubTokenStore.setToken(context, tokenInput.trim())
+                    }
+                    showGithubTokenDialog = false
+                }) { Text("保存") }
+            },
+            dismissButton = { TextButton(onClick = { showGithubTokenDialog = false }) { Text("取消") } }
+        )
+    }
+
+    // 下载引擎全屏页面
+    if (showEngineScreen) {
+        androidx.compose.animation.AnimatedVisibility(
+            visible = true,
+            enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(300)),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            DownloadEngineScreen(onBack = { showEngineScreen = false })
+        }
     }
 
     // 公告列表弹窗

@@ -179,6 +179,7 @@ fun SettingsScreen(
     backupManager: AuthBackupManager,
     /** 用应用内置下载器下载更新 APK（URL + 文件名），由 MainScreen 注入 DownloadManager */
     onDownloadUpdateApk: (url: String, fileName: String) -> Unit,
+    onEngineClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showThreadsDialog by remember { mutableStateOf(false) }
@@ -209,7 +210,6 @@ fun SettingsScreen(
     var showConcurrencyDialog by remember { mutableStateOf(false) }
     var showSpeedDialog by remember { mutableStateOf(false) }
     var showRetryDialog by remember { mutableStateOf(false) }
-    var showEngineScreen by remember { mutableStateOf(false) }
     // 用户体验与系统适配：锁屏保持下载 / 通知栏速度
     var keepLocked by remember { mutableStateOf(settingsRepo.keepDownloadWhenLocked) }
     var showSpeed by remember { mutableStateOf(settingsRepo.notificationShowSpeed) }
@@ -306,7 +306,7 @@ fun SettingsScreen(
                 "Gopeed 引擎（内置 gomobile 核心，按真实路径落盘）"
             else
                 "内置分片下载器（默认，走 SAF/MediaStore 保存）",
-            onClick = { showEngineScreen = true }
+            onClick = onEngineClick
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -1069,16 +1069,8 @@ fun SettingsScreen(
             }
         )
     }
-
-    // 下载引擎页面（带淡入过渡）
-    AnimatedVisibility(
-        visible = showEngineScreen,
-        enter = fadeIn(androidx.compose.animation.core.tween(300)),
-        exit = fadeOut(androidx.compose.animation.core.tween(200))
-    ) {
-        DownloadEngineScreen(onBack = { showEngineScreen = false })
-    }
 }
+
 
 @Composable
 private fun ExportAuthDialog(
