@@ -29,3 +29,4 @@ workspace.json
 
 # 构建日志
 release_build*.log
+build_*.log
