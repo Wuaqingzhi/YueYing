@@ -40,6 +40,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Bookmarks
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -207,6 +209,7 @@ fun MainScreen() {
     var showLanzouLogin by rememberSaveable { mutableStateOf(false) }
     var showAbout by rememberSaveable { mutableStateOf(false) }
     var showGithubTokenDialog by remember { mutableStateOf(false) }
+    var githubHasTokenState by remember { mutableStateOf(false) }
     var showEngineScreen by remember { mutableStateOf(false) }
     var showSupport by rememberSaveable { mutableStateOf(false) }
     var showTheme by rememberSaveable { mutableStateOf(false) }
@@ -225,6 +228,7 @@ fun MainScreen() {
     LaunchedEffect(Unit) {
         val prefs = context.getSharedPreferences("yueying_prefs", android.content.Context.MODE_PRIVATE)
         showOnboarding = !prefs.getBoolean("onboarding_shown", false)
+        githubHasTokenState = com.yueying.app.data.network.GitHubTokenStore.hasToken(context)
     }
 
     // 更新检测：每次进入 App 自动检查 GitHub 最新 Release（有新版即弹窗；网络失败则不提示）
@@ -901,6 +905,7 @@ fun MainScreen() {
                         onLanzouLogin = { showLanzouLogin = true },
                         onLanzouLogout = { lanzouViewModel.logout() },
                         onGitHubTokenClick = { showGithubTokenDialog = true },
+                        githubHasToken = githubHasTokenState,
                         onGitHubBrowseHome = {
                             scope.launch {
                                 val login = githubApi.getUserLogin()
@@ -1055,33 +1060,56 @@ fun MainScreen() {
 
     // GitHub Token 输入弹窗
     if (showGithubTokenDialog) {
-        var tokenInput by remember { mutableStateOf("") }
+        var tokenInput by rememberSaveable { mutableStateOf(com.yueying.app.data.network.GitHubTokenStore.getToken(context) ?: "") }
+        var passwordVisible by remember { mutableStateOf(false) }
+        var tokenError by remember { mutableStateOf<String?>(null) }
         AlertDialog(
             onDismissRequest = { showGithubTokenDialog = false },
             title = { Text("GitHub Token") },
             text = {
                 Column {
                     Text("Token 仅用于提升 API 限额（匿名 60/小时，认证后 5000/小时）。经 Android Keystore AES-GCM 加密存储。", style = MaterialTheme.typography.bodySmall)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("如何获取 Token：", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
-                    Text("1. 电脑浏览器打开 GitHub，右上角头像 → Settings", style = MaterialTheme.typography.bodySmall)
-                    Text("2. 左侧 Developer settings → Personal access tokens → Tokens (classic) → Generate new token", style = MaterialTheme.typography.bodySmall)
-                    Text("3. 勾选 public_repo 即可浏览公开仓库；如需私有仓库，再勾选 repo", style = MaterialTheme.typography.bodySmall)
-                    Text("4. 有效期建议选 90 天或 No expiration，生成后复制粘贴到下方输入框", style = MaterialTheme.typography.bodySmall)
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(Modifier.height(10.dp))
+                    Text("如何获取 Token：", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+                    Text("1. 电脑浏览器打开 GitHub，右上角头像 → Settings\n2. 左侧 Developer settings → Personal access tokens → Tokens (classic) → Generate new token\n3. 勾选 public_repo 即可浏览公开仓库；如需私有仓库，再勾选 repo\n4. 有效期建议选 90 天或 No expiration，生成后复制粘贴到下方输入框", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(12.dp))
                     OutlinedTextField(
                         value = tokenInput,
-                        onValueChange = { tokenInput = it },
-                        label = { Text("Personal Access Token") },
+                        onValueChange = { tokenInput = it; tokenError = null },
                         singleLine = true,
+                        isError = tokenError != null,
+                        label = { Text("Personal Access Token") },
+                        supportingText = { tokenError?.let { Text(it) } },
+                        visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(if (passwordVisible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff, contentDescription = null)
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             },
             confirmButton = {
                 TextButton(onClick = {
-                    com.yueying.app.data.network.GitHubTokenStore.setToken(context, tokenInput.trim().ifBlank { null })
-                    showGithubTokenDialog = false
+                    val input = tokenInput.trim()
+                    if (input.isBlank()) {
+                        com.yueying.app.data.network.GitHubTokenStore.setToken(context, null)
+                        githubHasTokenState = false
+                        showGithubTokenDialog = false
+                    } else {
+                        scope.launch {
+                            when (val check = githubApi.validateToken(input)) {
+                                is com.yueying.app.data.network.TokenCheck.Valid -> {
+                                    com.yueying.app.data.network.GitHubTokenStore.setToken(context, input)
+                                    githubHasTokenState = true
+                                    showGithubTokenDialog = false
+                                }
+                                com.yueying.app.data.network.TokenCheck.Invalid -> tokenError = "Token 无效或已过期，请重新生成"
+                                com.yueying.app.data.network.TokenCheck.Unknown -> tokenError = "无法校验 Token（网络异常）"
+                            }
+                        }
+                    }
                 }) { Text("保存") }
             },
             dismissButton = { TextButton(onClick = { showGithubTokenDialog = false }) { Text("取消") } }
