@@ -127,6 +127,10 @@ import com.yueying.app.data.repository.UCResolveRepository
 import com.yueying.app.data.repository.XunleiAccountRepository
 import com.yueying.app.data.repository.XunleiResolveRepository
 import com.yueying.app.ui.login.BaiduLoginScreen
+import com.yueying.app.ui.login.Pan115LoginScreen
+import com.yueying.app.ui.login.GuangYaLoginScreen
+import com.yueying.app.ui.login.ILanzouLoginScreen
+import com.yueying.app.ui.login.LanzouLoginScreen
 import com.yueying.app.ui.login.C139LoginScreen
 import com.yueying.app.ui.login.Pan123LoginScreen
 import com.yueying.app.ui.login.QuarkLoginScreen
@@ -701,6 +705,27 @@ fun MainScreen() {
                 showXunleiVerify = true
             }
         )
+        return
+    }
+
+    // 115网盘登录页
+    if (showPan115Login) {
+        Pan115LoginScreen(onBack = { showPan115Login = false }, onSaved = { showPan115Login = false })
+        return
+    }
+    // 光鸭云盘登录页
+    if (showGuangYaLogin) {
+        GuangYaLoginScreen(onBack = { showGuangYaLogin = false }, onSaved = { showGuangYaLogin = false })
+        return
+    }
+    // 蓝奏云优享版登录页
+    if (showILanzouLogin) {
+        ILanzouLoginScreen(onBack = { showILanzouLogin = false }, onSaved = { showILanzouLogin = false })
+        return
+    }
+    // 蓝奏云登录页
+    if (showLanzouLogin) {
+        LanzouLoginScreen(onBack = { showLanzouLogin = false }, onSaved = { showLanzouLogin = false })
         return
     }
 
