@@ -192,10 +192,6 @@ fun SettingsScreen(
     val settingsRepo = remember { SettingsRepository(context) }
     var downloadDirUri by remember { mutableStateOf(settingsRepo.downloadDirUri) }
     var showDevMenu by remember { mutableStateOf(false) }
-    // v2.0 账号：退出登录确认弹窗
-    var showLogoutDialog by remember { mutableStateOf(false) }
-    // v2.2.1 账号：账号信息 + 修改密码弹窗
-    var showAccountDialog by remember { mutableStateOf(false) }
     // 网络与下载策略（本地状态驱动 UI，同时同步 SharedPreferences）
     var maxConcurrent by remember { mutableStateOf(settingsRepo.maxConcurrentDownloads) }
     var speedLimitBps by remember { mutableStateOf(settingsRepo.downloadSpeedLimit) }
@@ -207,8 +203,6 @@ fun SettingsScreen(
     var keepLocked by remember { mutableStateOf(settingsRepo.keepDownloadWhenLocked) }
     var showSpeed by remember { mutableStateOf(settingsRepo.notificationShowSpeed) }
     var showBatteryDialog by remember { mutableStateOf(false) }
-    // v2.3.3 云同步：同步云端开关
-    var syncCloud by remember { mutableStateOf(settingsRepo.syncCloudEnabled) }
     // 通知是否可用（areNotificationsEnabled 不是 Compose 状态源，手动提升为状态，
     // 权限回调/从系统设置返回时刷新，保证副标题文案即时同步）
     var notificationsEnabled by remember {
@@ -290,90 +284,7 @@ fun SettingsScreen(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        // ===== v2.0 账号区块 =====
-        SectionLabel("账号")
-        SettingsItem(
-            icon = Icons.Outlined.AccountCircle,
-            title = "当前账号",
-            description = AuthRepository.currentEmail(context) ?: "未登录",
-            onClick = { showAccountDialog = true },
-            trailing = {
-                TextButton(onClick = { showLogoutDialog = true }) { Text("退出登录") }
-            }
-        )
-
-        // 账号信息 + 修改密码弹窗（修改前需邮箱验证码验证）
-        if (showAccountDialog) {
-            AccountInfoDialog(
-                email = AuthRepository.currentEmail(context) ?: "",
-                onDismiss = { showAccountDialog = false }
-            )
-        }
-
-        // v2.3.3 同步云端：默认关闭；开启后网盘账号自动上传云端，换机/重装登录自动恢复
-        Spacer(modifier = Modifier.height(8.dp))
-        SettingsItem(
-            icon = Icons.Outlined.CloudSync,
-            title = "同步云端",
-            description = if (syncCloud) "网盘账号自动上传云端，换机登录自动恢复" else "默认关闭，开启后自动同步网盘账号",
-            onClick = {
-                syncCloud = !syncCloud
-                settingsRepo.syncCloudEnabled = syncCloud
-                if (syncCloud) {
-                    scope.launch {
-                        SnackbarController.show("正在同步网盘账号到云端…")
-                        val ok = AccountSyncManager.pushAll(context)
-                        if (ok) SnackbarController.show("网盘账号已同步到云端")
-                        else SnackbarController.show("云端同步失败，请检查网络")
-                    }
-                } else {
-                    SnackbarController.show("已关闭：网盘账号不再自动同步")
-                }
-            },
-            trailing = {
-                Switch(checked = syncCloud, onCheckedChange = {
-                    syncCloud = it
-                    settingsRepo.syncCloudEnabled = it
-                    if (it) {
-                        scope.launch {
-                            SnackbarController.show("正在同步网盘账号到云端…")
-                            val ok = AccountSyncManager.pushAll(context)
-                            if (ok) SnackbarController.show("网盘账号已同步到云端")
-                            else SnackbarController.show("云端同步失败，请检查网络")
-                        }
-                    } else {
-                        SnackbarController.show("已关闭：网盘账号不再自动同步")
-                    }
-                })
-            }
-        )
-
-        // 退出登录确认：退出后清除会话并重启回到登录页
-        if (showLogoutDialog) {
-            AlertDialog(
-                onDismissRequest = { showLogoutDialog = false },
-                title = { Text("退出登录") },
-                text = { Text("退出后需重新登录才能使用解析与下载功能，确认退出？") },
-                confirmButton = {
-                    TextButton(onClick = {
-                        showLogoutDialog = false
-                        AuthRepository.logout(context)
-                        val activity = context as? Activity
-                        if (activity != null) {
-                            activity.finish()
-                        }
-                        val intent = context.packageManager
-                            .getLaunchIntentForPackage(context.packageName)
-                            ?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
-                        if (intent != null) context.startActivity(intent)
-                    }) { Text("退出") }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showLogoutDialog = false }) { Text("取消") }
-                }
-            )
-        }
-
+        // 网络与下载策略：最大并发数 / 限速 / 重试次数
         Spacer(modifier = Modifier.height(8.dp))
 
         SectionLabel("下载")
@@ -1103,170 +1014,6 @@ fun SettingsScreen(
     }
 }
 
-/** 账号信息 + 修改密码弹窗：显示当前账号，修改密码前需发送验证码到当前邮箱验证 */
-@Composable
-private fun AccountInfoDialog(
-    email: String,
-    onDismiss: () -> Unit
-) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val repo = remember { AuthRepository(context) }
-
-    var code by remember { mutableStateOf("") }
-    var newPass by remember { mutableStateOf("") }
-    var newConfirm by remember { mutableStateOf("") }
-    var showPass by remember { mutableStateOf(false) }
-    var sending by remember { mutableStateOf(false) }
-    var submitting by remember { mutableStateOf(false) }
-    var countdown by remember { mutableStateOf(0) }
-
-    // 发送验证码 60s 倒计时
-    LaunchedEffect(countdown) {
-        if (countdown > 0) {
-            delay(1000)
-            countdown -= 1
-        }
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("账号信息") },
-        text = {
-            // 横屏/小屏时内容超高可滚动
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 480.dp)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = "当前账号：$email",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "修改密码需先向当前邮箱发送验证码，验证通过后才能重置。",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline
-                )
-                // 验证码 + 发送按钮
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    OutlinedTextField(
-                        value = code,
-                        onValueChange = { code = it.filter(Char::isDigit).take(6) },
-                        modifier = Modifier.weight(1f),
-                        label = { Text("验证码") },
-                        placeholder = { Text("6 位数字") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    OutlinedButton(
-                        onClick = {
-                            if (sending || countdown > 0) return@OutlinedButton
-                            scope.launch {
-                                sending = true
-                                when (val r = repo.sendCode(email)) {
-                                    is AuthRepository.AuthResult.Success -> {
-                                        SnackbarController.show("验证码已发送，请查收邮箱")
-                                        countdown = 60
-                                    }
-                                    is AuthRepository.AuthResult.Error ->
-                                        SnackbarController.show(r.message)
-                                }
-                                sending = false
-                            }
-                        },
-                        enabled = !sending && countdown == 0,
-                        modifier = Modifier.height(56.dp)
-                    ) {
-                        Text(
-                            if (countdown > 0) "${countdown}s"
-                            else if (sending) "发送中"
-                            else "发送验证码"
-                        )
-                    }
-                }
-                // 新密码
-                OutlinedTextField(
-                    value = newPass,
-                    onValueChange = { newPass = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("新密码（至少 8 位）") },
-                    singleLine = true,
-                    visualTransformation = if (showPass) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { showPass = !showPass }) {
-                            Icon(
-                                imageVector = if (showPass) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                                contentDescription = if (showPass) "隐藏密码" else "显示密码"
-                            )
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
-                )
-                // 确认新密码
-                OutlinedTextField(
-                    value = newConfirm,
-                    onValueChange = { newConfirm = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("确认新密码") },
-                    singleLine = true,
-                    visualTransformation = if (showPass) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { showPass = !showPass }) {
-                            Icon(
-                                imageVector = if (showPass) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                                contentDescription = if (showPass) "隐藏密码" else "显示密码"
-                            )
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    if (submitting) return@Button
-                    scope.launch {
-                        submitting = true
-                        when (val r = repo.resetPassword(email, code, newPass, newConfirm)) {
-                            is AuthRepository.AuthResult.Success -> {
-                                SnackbarController.show("密码修改成功")
-                                onDismiss()
-                            }
-                            is AuthRepository.AuthResult.Error ->
-                                SnackbarController.show(r.message)
-                        }
-                        submitting = false
-                    }
-                },
-                enabled = !submitting
-            ) {
-                if (submitting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Text("确认修改")
-                }
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("关闭") }
-        }
-    )
-}
-
-/** 导出网盘认证弹窗：AES 加密密码 + 导出范围（仅已登录 / 全部绑定） */
 @Composable
 private fun ExportAuthDialog(
     onDismiss: () -> Unit,
