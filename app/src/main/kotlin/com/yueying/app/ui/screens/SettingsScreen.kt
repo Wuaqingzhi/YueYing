@@ -53,6 +53,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.Article
 import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material.icons.outlined.NewReleases
@@ -120,6 +121,7 @@ import com.yueying.app.data.repository.AuthRepository
 import com.yueying.app.data.sync.AccountSyncManager
 import com.yueying.app.data.update.UpdateChecker
 import com.yueying.app.ui.SnackbarController
+import com.yueying.app.ui.theme.ThemeController
 import com.yueying.app.util.LogExporter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
