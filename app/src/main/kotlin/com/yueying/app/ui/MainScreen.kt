@@ -901,7 +901,8 @@ fun MainScreen() {
                         onLanzouLogin = { showLanzouLogin = true },
                         onLanzouLogout = { lanzouViewModel.logout() },
                         onGitHubTokenClick = { showGithubTokenDialog = true },
-                        onGitHubBrowseHome = { }
+                        onGitHubBrowseHome = { },
+                        onGitHubClearToken = { com.yueying.app.data.network.GitHubTokenStore.setToken(context, null) }
                     )
                     MainTab.Download -> DownloadScreen(scrollBehavior, downloadViewModel)
                     MainTab.Settings -> SettingsScreen(
@@ -1047,15 +1048,21 @@ fun MainScreen() {
         var tokenInput by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showGithubTokenDialog = false },
-            title = { Text("配置 GitHub Token") },
+            title = { Text("GitHub Token") },
             text = {
                 Column {
-                    Text("输入你的 GitHub Personal Access Token（ghp_ 开头），用于提升 API 限额。", style = MaterialTheme.typography.bodySmall)
+                    Text("Token 仅用于提升 API 限额（匿名 60/小时，认证后 5000/小时）。经 Android Keystore AES-GCM 加密存储。", style = MaterialTheme.typography.bodySmall)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("如何获取 Token：", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                    Text("1. 电脑浏览器打开 GitHub，右上角头像 → Settings", style = MaterialTheme.typography.bodySmall)
+                    Text("2. 左侧 Developer settings → Personal access tokens → Tokens (classic) → Generate new token", style = MaterialTheme.typography.bodySmall)
+                    Text("3. 勾选 public_repo 即可浏览公开仓库；如需私有仓库，再勾选 repo", style = MaterialTheme.typography.bodySmall)
+                    Text("4. 有效期建议选 90 天或 No expiration，生成后复制粘贴到下方输入框", style = MaterialTheme.typography.bodySmall)
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = tokenInput,
                         onValueChange = { tokenInput = it },
-                        label = { Text("Token") },
+                        label = { Text("Personal Access Token") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -1063,9 +1070,7 @@ fun MainScreen() {
             },
             confirmButton = {
                 TextButton(onClick = {
-                    if (tokenInput.isNotBlank()) {
-                        com.yueying.app.data.network.GitHubTokenStore.setToken(context, tokenInput.trim())
-                    }
+                    com.yueying.app.data.network.GitHubTokenStore.setToken(context, tokenInput.trim().ifBlank { null })
                     showGithubTokenDialog = false
                 }) { Text("保存") }
             },
