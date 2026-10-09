@@ -1,3 +1,5 @@
+package com.yueying.app.ui.screens
+import com.yueying.app.R
 /*
  * YunX (云析) - A network drive share-link parser and high-speed downloader for Android.
  * Copyright (C) 2026 CYQawa
@@ -16,8 +18,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.yueying.app.ui.screens
-
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -30,6 +30,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -68,6 +69,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
@@ -109,6 +111,7 @@ private data class DriveAccount(
     val name: String,
     val description: String,
     val avatarText: String,
+    val avatarResId: Int? = null,
     val isLoggedIn: Boolean = false
 )
 
@@ -224,6 +227,7 @@ fun DriveScreen(
         name = "夸克网盘",
         description = quarkAccount?.nickname ?: "点击登录，支持解析下载",
         avatarText = "夸",
+        avatarResId = R.drawable.ic_pan_quark,
         isLoggedIn = quarkAccount != null
     )
     val uc = DriveAccount(
@@ -231,6 +235,7 @@ fun DriveScreen(
         name = "UC网盘",
         description = ucAccount?.nickname ?: "点击登录，支持解析下载",
         avatarText = "UC",
+        avatarResId = R.drawable.ic_pan_uc,
         isLoggedIn = ucAccount != null
     )
     val xunlei = DriveAccount(
@@ -238,6 +243,7 @@ fun DriveScreen(
         name = "迅雷网盘",
         description = xunleiAccount?.nickname ?: "点击登录，支持解析下载",
         avatarText = "迅",
+        avatarResId = R.drawable.ic_pan_xunlei,
         isLoggedIn = xunleiAccount != null
     )
     val baidu = DriveAccount(
@@ -245,6 +251,7 @@ fun DriveScreen(
         name = "百度网盘",
         description = baiduAccount?.nickname ?: "点击登录，支持解析下载",
         avatarText = "度",
+        avatarResId = R.drawable.ic_pan_baidu,
         isLoggedIn = baiduAccount != null
     )
     val c139 = DriveAccount(
@@ -252,6 +259,7 @@ fun DriveScreen(
         name = "139网盘",
         description = c139Account?.nickname ?: "点击登录，支持解析下载",
         avatarText = "139",
+        avatarResId = R.drawable.ic_pan_c139,
         isLoggedIn = c139Account != null
     )
     val pan123 = DriveAccount(
@@ -259,6 +267,7 @@ fun DriveScreen(
         name = "123云盘",
         description = pan123Account?.nickname ?: "点击登录，支持解析下载",
         avatarText = "123",
+        avatarResId = R.drawable.ic_pan_pan123,
         isLoggedIn = pan123Account != null
     )
     val pan115 = DriveAccount(
@@ -266,6 +275,7 @@ fun DriveScreen(
         name = "115网盘",
         description = pan115Account?.nickname ?: "点击登录，支持解析下载",
         avatarText = "115",
+        avatarResId = R.drawable.ic_pan_pan115,
         isLoggedIn = pan115Account != null
     )
     val guangya = DriveAccount(
@@ -273,6 +283,7 @@ fun DriveScreen(
         name = "光鸭云盘",
         description = guangyaAccount?.nickname ?: "点击登录，支持解析下载",
         avatarText = "光",
+        avatarResId = R.drawable.ic_pan_guangya,
         isLoggedIn = guangyaAccount != null
     )
     val ilanzou = DriveAccount(
@@ -280,6 +291,7 @@ fun DriveScreen(
         name = "蓝奏云优享版",
         description = ilanzouAccount?.nickname?.let { maskAccount(it) } ?: "点击登录，支持解析下载",
         avatarText = "蓝优",
+        avatarResId = R.drawable.ic_pan_lanzou,
         isLoggedIn = ilanzouAccount != null
     )
     val lanzou = DriveAccount(
@@ -287,6 +299,7 @@ fun DriveScreen(
         name = "蓝奏云",
         description = lanzouAccount?.nickname?.let { maskAccount(it) } ?: "点击登录，支持解析下载",
         avatarText = "蓝",
+        avatarResId = R.drawable.ic_pan_lanzou,
         isLoggedIn = lanzouAccount != null
     )
     // GitHub：把 GitHub 当网盘浏览下载；此处仅做 Token 管理（提升 API 限额），浏览入口在解析页
@@ -815,12 +828,20 @@ private fun DriveAccountCardContent(
             }
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = account.avatarText,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                if (account.avatarResId != null) {
+                    Image(
+                        painter = painterResource(id = account.avatarResId),
+                        contentDescription = account.name,
+                        modifier = Modifier.size(32.dp)
+                    )
+                } else {
+                    Text(
+                        text = account.avatarText,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
             }
         }
 
