@@ -901,7 +901,17 @@ fun MainScreen() {
                         onLanzouLogin = { showLanzouLogin = true },
                         onLanzouLogout = { lanzouViewModel.logout() },
                         onGitHubTokenClick = { showGithubTokenDialog = true },
-                        onGitHubBrowseHome = { },
+                        onGitHubBrowseHome = {
+                            scope.launch {
+                                val login = githubApi.getUserLogin()
+                                if (!login.isNullOrBlank()) {
+                                    resolveViewModel.startResolve("https://github.com/$login", "")
+                                    currentTab = MainTab.Resolve
+                                } else {
+                                    SnackbarController.show("无法获取 GitHub 账号信息，请检查网络或重新配置 Token")
+                                }
+                            }
+                        },
                         onGitHubClearToken = { com.yueying.app.data.network.GitHubTokenStore.setToken(context, null) }
                     )
                     MainTab.Download -> DownloadScreen(scrollBehavior, downloadViewModel)
