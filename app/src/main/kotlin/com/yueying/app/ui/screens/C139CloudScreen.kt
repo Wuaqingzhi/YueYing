@@ -817,10 +817,13 @@ private fun C139ShareSheet(
             Spacer(modifier = Modifier.height(20.dp))
             Button(
                 onClick = {
-                    if (viewModel.multiSelectMode) {
-                        viewModel.shareSelected(period)
-                    } else {
-                        viewModel.shareFile(period)
+                    val selectedPeriod = period
+                    if (selectedPeriod != null) {
+                        if (viewModel.multiSelectMode) {
+                            viewModel.shareSelected(selectedPeriod)
+                        } else {
+                            viewModel.shareFile(selectedPeriod)
+                        }
                     }
                     onDismiss()
                 },

@@ -151,6 +151,14 @@ class MainActivity : ComponentActivity() {
             showNotificationGuide = true
         }
     }
+
+    companion object {
+        /** 下载完成通知点击后跳转到下载 Tab 的 Intent extra */
+        const val EXTRA_OPEN_TAB = "com.yueying.app.extra.OPEN_TAB"
+
+        /** [EXTRA_OPEN_TAB] 的取值：打开「下载」Tab */
+        const val TAB_DOWNLOAD = "download"
+    }
 }
 
 /** 通知被禁用时的引导弹窗：跳系统应用通知设置页 */

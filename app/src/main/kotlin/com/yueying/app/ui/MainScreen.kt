@@ -69,6 +69,7 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -93,6 +94,12 @@ import com.yueying.app.data.backup.AuthBackupManager
 import com.yueying.app.data.network.BaiduApi
 import com.yueying.app.data.network.C139Api
 import com.yueying.app.data.network.Pan123Api
+import com.yueying.app.data.network.Pan115Api
+import com.yueying.app.data.network.GuangYaApi
+import com.yueying.app.data.network.ILanzouApi
+import com.yueying.app.data.network.LanzouApi
+import com.yueying.app.data.network.GitHubApi
+import com.yueying.app.data.network.GitHubTokenStore
 import com.yueying.app.data.network.QuarkApi
 import com.yueying.app.data.network.UCApi
 import com.yueying.app.data.network.XunleiApi
@@ -105,6 +112,14 @@ import com.yueying.app.data.repository.C139AccountRepository
 import com.yueying.app.data.repository.C139ResolveRepository
 import com.yueying.app.data.repository.Pan123AccountRepository
 import com.yueying.app.data.repository.Pan123ResolveRepository
+import com.yueying.app.data.repository.Pan115AccountRepository
+import com.yueying.app.data.repository.Pan115ResolveRepository
+import com.yueying.app.data.repository.GuangYaAccountRepository
+import com.yueying.app.data.repository.GuangYaResolveRepository
+import com.yueying.app.data.repository.ILanzouAccountRepository
+import com.yueying.app.data.repository.ILanzouResolveRepository
+import com.yueying.app.data.repository.LanzouAccountRepository
+import com.yueying.app.data.repository.LanzouResolveRepository
 import com.yueying.app.data.repository.QuarkAccountRepository
 import com.yueying.app.data.repository.QuarkResolveRepository
 import com.yueying.app.data.repository.UCAccountRepository
@@ -138,6 +153,14 @@ import com.yueying.app.ui.viewmodel.DownloadViewModel
 import com.yueying.app.ui.viewmodel.DriveQuotaViewModel
 import com.yueying.app.ui.viewmodel.Pan123AccountViewModel
 import com.yueying.app.ui.viewmodel.Pan123CloudViewModel
+import com.yueying.app.ui.viewmodel.Pan115AccountViewModel
+import com.yueying.app.ui.viewmodel.Pan115CloudViewModel
+import com.yueying.app.ui.viewmodel.GuangYaAccountViewModel
+import com.yueying.app.ui.viewmodel.GuangYaCloudViewModel
+import com.yueying.app.ui.viewmodel.ILanzouAccountViewModel
+import com.yueying.app.ui.viewmodel.ILanzouCloudViewModel
+import com.yueying.app.ui.viewmodel.LanzouAccountViewModel
+import com.yueying.app.ui.viewmodel.LanzouCloudViewModel
 import com.yueying.app.ui.viewmodel.QuarkAccountViewModel
 import com.yueying.app.ui.viewmodel.QuarkCloudViewModel
 import com.yueying.app.ui.viewmodel.ResolveViewModel
@@ -172,6 +195,10 @@ fun MainScreen() {
     var showBaiduLogin by rememberSaveable { mutableStateOf(false) }
     var showC139Login by rememberSaveable { mutableStateOf(false) }
     var showPan123Login by rememberSaveable { mutableStateOf(false) }
+    var showPan115Login by rememberSaveable { mutableStateOf(false) }
+    var showGuangYaLogin by rememberSaveable { mutableStateOf(false) }
+    var showILanzouLogin by rememberSaveable { mutableStateOf(false) }
+    var showLanzouLogin by rememberSaveable { mutableStateOf(false) }
     var showAbout by rememberSaveable { mutableStateOf(false) }
     var showSupport by rememberSaveable { mutableStateOf(false) }
     var showTheme by rememberSaveable { mutableStateOf(false) }
@@ -196,7 +223,9 @@ fun MainScreen() {
     var showUpdateDialog by remember { mutableStateOf(false) }
     var pendingRelease by remember { mutableStateOf<UpdateChecker.Release?>(null) }
     LaunchedEffect(Unit) {
-        val release = UpdateChecker.fetchLatestRelease() ?: return@LaunchedEffect
+        val result = UpdateChecker.fetchLatestRelease()
+        if (result !is UpdateChecker.CheckResult.Success) return@LaunchedEffect
+        val release = result.release
         val current = UpdateChecker.currentVersion(context)
         if (UpdateChecker.compareVersions(release.tagName, current) > 0) {
             pendingRelease = release
@@ -249,6 +278,10 @@ fun MainScreen() {
     val baiduApi = remember { BaiduApi() }
     val c139Api = remember { C139Api() }
     val pan123Api = remember { Pan123Api() }
+    val pan115Api = remember { Pan115Api() }
+    val guangyaApi = remember { GuangYaApi() }
+    val ilanzouApi = remember { ILanzouApi() }
+    val lanzouApi = remember { LanzouApi() }
     val db = remember { AppDatabase.get(context) }
     val settings = remember { SettingsRepository(context) }
     val repository = remember {
@@ -268,6 +301,23 @@ fun MainScreen() {
     }
     val pan123Repository = remember {
         Pan123AccountRepository(db.pan123AccountDao(), pan123Api)
+    }
+    val pan115Repository = remember {
+        Pan115AccountRepository(db.pan115AccountDao(), pan115Api)
+    }
+    val guangyaRepository = remember {
+        GuangYaAccountRepository(db.guangyaAccountDao(), guangyaApi)
+    }
+    guangyaApi.deviceIdProvider = { guangyaRepository.cachedDeviceId() }
+    val ilanzouRepository = remember {
+        ILanzouAccountRepository(db.ilanzouAccountDao(), ilanzouApi)
+    }
+    val lanzouRepository = remember {
+        LanzouAccountRepository(db.lanzouAccountDao(), lanzouApi)
+    }
+    // GitHub API 封装：Token 从 GitHubTokenStore 动态读取（Keystore 加密），提升 API 限额
+    val githubApi = remember {
+        GitHubApi(tokenProvider = { GitHubTokenStore.getToken(context) })
     }
     // 网盘认证备份：打包/恢复各平台凭证
     val backupManager = remember {
@@ -341,6 +391,18 @@ fun MainScreen() {
     val pan123ViewModel: Pan123AccountViewModel = viewModel(
         factory = Pan123AccountViewModel.Factory(pan123Repository)
     )
+    val pan115ViewModel: Pan115AccountViewModel = viewModel(
+        factory = Pan115AccountViewModel.Factory(pan115Repository)
+    )
+    val guangyaViewModel: GuangYaAccountViewModel = viewModel(
+        factory = GuangYaAccountViewModel.Factory(guangyaRepository)
+    )
+    val ilanzouViewModel: ILanzouAccountViewModel = viewModel(
+        factory = ILanzouAccountViewModel.Factory(ilanzouRepository)
+    )
+    val lanzouViewModel: LanzouAccountViewModel = viewModel(
+        factory = LanzouAccountViewModel.Factory(lanzouRepository)
+    )
     // 各平台「账号是否已登录」流：云盘浏览 VM 在启动期（未登录）init 加载会残留「请先登录…」错误态，
     // 首次登录成功后由 VM 监听该流自动重载根目录（见各 XxxCloudViewModel init）
     val quarkLoginState = remember { repository.observeAccount().map { it != null } }
@@ -349,6 +411,10 @@ fun MainScreen() {
     val baiduLoginState = remember { baiduRepository.observeAccount().map { it != null } }
     val c139LoginState = remember { c139Repository.observeAccount().map { it != null } }
     val pan123LoginState = remember { pan123Repository.observeAccount().map { it != null } }
+    val pan115LoginState = remember { pan115Repository.observeAccount().map { it != null } }
+    val guangyaLoginState = remember { guangyaRepository.observeAccount().map { it != null } }
+    val ilanzouLoginState = remember { ilanzouRepository.observeAccount().map { it != null } }
+    val lanzouLoginState = remember { lanzouRepository.observeAccount().map { it != null } }
     // 夸克云盘浏览：作为网盘 Tab 内容展示（非全屏），cookie 从数据库读取（避免 StateFlow 初始值为空的竞态）；
     // 下载前经 getFreshCookie 惰性刷新 __puus（修复 AlistGo/alist#830 下载 412）
     val quarkCloudViewModel: QuarkCloudViewModel = viewModel(
@@ -415,7 +481,39 @@ fun MainScreen() {
             loginState = pan123LoginState
         )
     )
-    // 网盘空间详情：网盘页顶部「空间总览」展示 6 平台容量使用
+    val pan115CloudViewModel: Pan115CloudViewModel = viewModel(
+        factory = Pan115CloudViewModel.Factory(
+            pan115Api,
+            { pan115Repository.getAccount()?.cookie },
+            downloadManager,
+            loginState = pan115LoginState
+        )
+    )
+    val guangyaCloudViewModel: GuangYaCloudViewModel = viewModel(
+        factory = GuangYaCloudViewModel.Factory(
+            guangyaApi,
+            guangyaRepository,
+            downloadManager,
+            loginState = guangyaLoginState
+        )
+    )
+    val ilanzouCloudViewModel: ILanzouCloudViewModel = viewModel(
+        factory = ILanzouCloudViewModel.Factory(
+            ilanzouApi,
+            ilanzouRepository,
+            downloadManager,
+            loginState = ilanzouLoginState
+        )
+    )
+    val lanzouCloudViewModel: LanzouCloudViewModel = viewModel(
+        factory = LanzouCloudViewModel.Factory(
+            lanzouApi,
+            lanzouRepository,
+            downloadManager,
+            loginState = lanzouLoginState
+        )
+    )
+    // 网盘空间详情：网盘页顶部「空间总览」展示多平台容量使用
     val driveQuotaViewModel: DriveQuotaViewModel = viewModel(
         factory = DriveQuotaViewModel.Factory(
             api, { repository.getAccount()?.cookie },
@@ -426,7 +524,10 @@ fun MainScreen() {
             { xunleiRepository.getAccount()?.captchaToken },
             baiduApi, { baiduRepository.getAccount()?.cookie },
             c139Api, { c139Repository.getAccount()?.cookie },
-            pan123Api, { pan123Repository.getAccount()?.accessToken }
+            pan123Api, { pan123Repository.getAccount()?.accessToken },
+            pan115Api, { pan115Repository.getAccount()?.cookie },
+            guangyaApi, { guangyaRepository.getAccount() },
+            ilanzouApi, { ilanzouRepository.getAccount() }
         )
     )
     val xunleiResolveRepository = remember {
@@ -457,6 +558,21 @@ fun MainScreen() {
             tokenProvider = { pan123Repository.getAccount()?.accessToken }
         )
     }
+    val pan115ResolveRepository = remember {
+        Pan115ResolveRepository(pan115Api)
+    }
+    val guangyaResolveRepository = remember {
+        GuangYaResolveRepository(
+            api = guangyaApi,
+            tokenProvider = { guangyaRepository.ensureAccessToken() }
+        )
+    }
+    val lanzouResolveRepository = remember {
+        LanzouResolveRepository(lanzouApi)
+    }
+    val ilanzouResolveRepository = remember {
+        ILanzouResolveRepository(ilanzouApi, ilanzouRepository)
+    }
     val resolveViewModel: ResolveViewModel = viewModel(
         factory = ResolveViewModel.Factory(
             repository,
@@ -471,8 +587,19 @@ fun MainScreen() {
             c139ResolveRepository,
             pan123Repository,
             pan123ResolveRepository,
+            pan115Repository,
+            pan115ResolveRepository,
+            guangyaRepository,
+            guangyaResolveRepository,
+            ilanzouRepository,
+            ilanzouResolveRepository,
+            lanzouRepository,
+            lanzouResolveRepository,
             downloadManager,
-            db.bookmarkDao()
+            db.bookmarkDao(),
+            githubApi,
+            mirrorPrefixProvider = { UpdateChecker.MIRROR_PREFIX },
+            noSaveDownloadProvider = { settings.quarkNoSaveDownload }
         )
     )
     val downloadViewModel: DownloadViewModel = viewModel(
@@ -487,6 +614,10 @@ fun MainScreen() {
     val baiduAccount by baiduViewModel.baiduAccount.collectAsState()
     val c139Account by c139ViewModel.c139Account.collectAsState()
     val pan123Account by pan123ViewModel.pan123Account.collectAsState()
+    val pan115Account by pan115ViewModel.pan115Account.collectAsState()
+    val guangyaAccount by guangyaViewModel.guangyaAccount.collectAsState()
+    val ilanzouAccount by ilanzouViewModel.ilanzouAccount.collectAsState()
+    val lanzouAccount by lanzouViewModel.lanzouAccount.collectAsState()
 
     // 首次下载引导：锁屏保持下载默认开启，但新用户未加入「忽略电池优化」白名单 →引导一次
     var showBatteryGuide by remember { mutableStateOf(false) }
@@ -692,7 +823,11 @@ fun MainScreen() {
                         baiduCloudViewModel,
                         c139CloudViewModel,
                         ucCloudViewModel,
-                        pan123CloudViewModel
+                        pan123CloudViewModel,
+                        pan115CloudViewModel,
+                        guangyaCloudViewModel,
+                        bookmarkViewModel,
+                        onOpenBookmarks = { showBookmarks = true }
                     )
                     MainTab.Drive -> DriveScreen(
                         scrollBehavior = scrollBehavior,
@@ -702,12 +837,20 @@ fun MainScreen() {
                         baiduAccount = baiduAccount,
                         c139Account = c139Account,
                         pan123Account = pan123Account,
+                        pan115Account = pan115Account,
+                        guangyaAccount = guangyaAccount,
+                        ilanzouAccount = ilanzouAccount,
+                        lanzouAccount = lanzouAccount,
                         quarkCloudViewModel = quarkCloudViewModel,
                         ucCloudViewModel = ucCloudViewModel,
                         xunleiCloudViewModel = xunleiCloudViewModel,
                         baiduCloudViewModel = baiduCloudViewModel,
                         c139CloudViewModel = c139CloudViewModel,
                         pan123CloudViewModel = pan123CloudViewModel,
+                        pan115CloudViewModel = pan115CloudViewModel,
+                        guangyaCloudViewModel = guangyaCloudViewModel,
+                        ilanzouCloudViewModel = ilanzouCloudViewModel,
+                        lanzouCloudViewModel = lanzouCloudViewModel,
                         driveQuotaViewModel = driveQuotaViewModel,
                         onQuarkLogin = { showQuarkLogin = true },
                         onQuarkLogout = { viewModel.logout() },
@@ -721,7 +864,15 @@ fun MainScreen() {
                         onC139Login = { showC139Login = true },
                         onC139Logout = { c139ViewModel.logout() },
                         onPan123Login = { showPan123Login = true },
-                        onPan123Logout = { pan123ViewModel.logout() }
+                        onPan123Logout = { pan123ViewModel.logout() },
+                        onPan115Login = { showPan115Login = true },
+                        onPan115Logout = { pan115ViewModel.logout() },
+                        onGuangYaLogin = { showGuangYaLogin = true },
+                        onGuangYaLogout = { guangyaViewModel.logout() },
+                        onILanzouLogin = { showILanzouLogin = true },
+                        onILanzouLogout = { ilanzouViewModel.logout() },
+                        onLanzouLogin = { showLanzouLogin = true },
+                        onLanzouLogout = { lanzouViewModel.logout() }
                     )
                     MainTab.Download -> DownloadScreen(scrollBehavior, downloadViewModel)
                     MainTab.Settings -> SettingsScreen(
@@ -875,7 +1026,7 @@ fun MainScreen() {
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = a.content,
+                            text = a.content.orEmpty(),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -898,7 +1049,7 @@ fun MainScreen() {
                 showStartDialog = null
             },
             title = { Text(a.title) },
-            text = { Text(a.content) },
+            text = { Text(a.content.orEmpty()) },
             confirmButton = {
                 TextButton(onClick = {
                     context.getSharedPreferences("yy_announce", android.content.Context.MODE_PRIVATE).edit().putString("last_read_id", a.id).apply()
@@ -979,6 +1130,7 @@ fun MainScreen() {
             )
         }
     }
+}
 }
 
 /**

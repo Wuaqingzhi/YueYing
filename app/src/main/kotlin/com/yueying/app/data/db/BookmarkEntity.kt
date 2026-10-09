@@ -1,7 +1,6 @@
 /*
- * YueYing (月影) - A network drive share-link parser and high-speed downloader for Android.
+ * YunX (云析) - A network drive share-link parser and high-speed downloader for Android.
  * Copyright (C) 2026 CYQawa
- * Copyright (C) 2026 月影 (YueYing) Project
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -39,6 +38,10 @@ data class BookmarkEntity(
     val pwd: String = "",
     /** 分类 */
     val category: String = DEFAULT_CATEGORY,
+    /** 是否已添加到主页快捷方式：主页（解析页）下方网格展示，点击直接解析 */
+    val homePinned: Boolean = false,
+    /** 主页快捷方式色块的自定义文字（空串 = 自动取标题前几个字） */
+    val homeLabel: String = "",
     val createTime: Long = System.currentTimeMillis()
 ) {
     companion object {

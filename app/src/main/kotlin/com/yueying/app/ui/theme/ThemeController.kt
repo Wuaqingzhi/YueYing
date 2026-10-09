@@ -1,7 +1,6 @@
 /*
- * YueYing (月影) - A network drive share-link parser and high-speed downloader for Android.
+ * YunX (云析) - A network drive share-link parser and high-speed downloader for Android.
  * Copyright (C) 2026 CYQawa
- * Copyright (C) 2026 月影 (YueYing) Project
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -45,6 +44,22 @@ object ThemeController {
     var seedColor by mutableStateOf(SettingsRepository.DEFAULT_SEED_COLOR)
         private set
 
+    /** 文件名显示方式：false=单行跑马灯滚动（默认），true=多行折行显示 */
+    var fileNameMultiLine by mutableStateOf(false)
+        private set
+
+    /** 自动识别剪贴板分享链接：关闭后不再读取剪贴板（默认开启） */
+    var clipboardSuggestEnabled by mutableStateOf(true)
+        private set
+
+    /** 接受预发布版更新：检查更新时包含 GitHub Pre-release（默认关闭） */
+    var acceptPrereleaseUpdate by mutableStateOf(false)
+        private set
+
+    /** 下载调试：开启后下载页长按任务可查看「调试信息」（默认关闭；关闭会清空全部调试日志） */
+    var downloadDebug by mutableStateOf(false)
+        private set
+
     private var initialized = false
 
     /** 从持久化存储加载（幂等；首次调用有效） */
@@ -54,6 +69,10 @@ object ThemeController {
         darkMode = s.darkMode
         colorMode = s.themeColorMode
         seedColor = s.themeSeedColor
+        fileNameMultiLine = s.fileNameMultiLine
+        clipboardSuggestEnabled = s.clipboardSuggestEnabled
+        acceptPrereleaseUpdate = s.acceptPrereleaseUpdate
+        downloadDebug = s.downloadDebug
         initialized = true
     }
 
@@ -77,5 +96,32 @@ object ThemeController {
             themeSeedColor = argb
             themeColorMode = 2
         }
+    }
+
+    /** 设置文件名显示方式并持久化（true=多行折行，false=单行跑马灯） */
+    fun setFileNameMultiLine(context: Context, value: Boolean) {
+        fileNameMultiLine = value
+        SettingsRepository(context).fileNameMultiLine = value
+    }
+
+    /** 设置是否自动识别剪贴板分享链接并持久化 */
+    fun setClipboardSuggestEnabled(context: Context, value: Boolean) {
+        clipboardSuggestEnabled = value
+        SettingsRepository(context).clipboardSuggestEnabled = value
+    }
+
+    /** 设置是否接受预发布版更新并持久化 */
+    fun setAcceptPrereleaseUpdate(context: Context, value: Boolean) {
+        acceptPrereleaseUpdate = value
+        SettingsRepository(context).acceptPrereleaseUpdate = value
+    }
+
+    /**
+     * 设置下载调试开关并持久化。**关闭会清空全部调试日志**，所以清空与提示由调用方负责
+     * （设置页关开关前会先弹二次确认，确认后调用 `DownloadDebugLog.setEnabled`）。
+     */
+    fun setDownloadDebug(context: Context, value: Boolean) {
+        downloadDebug = value
+        SettingsRepository(context).downloadDebug = value
     }
 }

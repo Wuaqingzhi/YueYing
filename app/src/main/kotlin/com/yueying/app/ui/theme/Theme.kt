@@ -22,18 +22,21 @@ package com.yueying.app.ui.theme
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.Typography
+import androidx.compose.material3.MotionScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.google.android.material.color.utilities.Hct
 import com.google.android.material.color.utilities.SchemeTonalSpot
 
@@ -381,3 +384,36 @@ private fun seedColorScheme(seedArgb: Long, dark: Boolean): androidx.compose.mat
         surfaceContainerHighest = Color(scheme.surfaceContainerHighest),
     )
 }
+/** 列表组大圆角（首尾项外侧） */
+private val CornerLarge = 16.dp
+
+/** 组内衔接处的内圆角：刻意很小，相邻两项拼在一起时不会出现明显缺口 */
+private val ListGroupInnerCorner = 2.dp
+
+/** 列表组内相邻两项之间的间距（发丝缝） */
+internal val ListGroupGap = 3.dp
+
+/** 列表组分段圆角位置 */
+internal enum class ListGroupPos { FIRST, MIDDLE, LAST, SINGLE }
+
+/**
+ * 列表组分段圆角：首项只圆上两角、末项只圆下两角（16dp），中间项只留 2dp 内圆角。
+ */
+internal fun listGroupShape(pos: ListGroupPos): RoundedCornerShape {
+    val top = if (pos == ListGroupPos.FIRST || pos == ListGroupPos.SINGLE) CornerLarge else ListGroupInnerCorner
+    val bottom = if (pos == ListGroupPos.LAST || pos == ListGroupPos.SINGLE) CornerLarge else ListGroupInnerCorner
+    return RoundedCornerShape(topStart = top, topEnd = top, bottomEnd = bottom, bottomStart = bottom)
+}
+
+/** 按下标取列表组圆角：LazyColumn(itemsIndexed) 等能拿到 index/count 的列表直接调用 */
+internal fun listGroupShape(index: Int, count: Int): RoundedCornerShape = listGroupShape(
+    when {
+        count <= 1 -> ListGroupPos.SINGLE
+        index <= 0 -> ListGroupPos.FIRST
+        index >= count - 1 -> ListGroupPos.LAST
+        else -> ListGroupPos.MIDDLE
+    }
+)
+
+/** 全局动效方案（弹簧物理：位移/尺寸用 spatial，透明度/颜色用 effects）；Motion.kt 与组件共用 */
+internal val AppMotionScheme = MotionScheme.expressive()

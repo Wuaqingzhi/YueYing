@@ -34,5 +34,7 @@ data class XunleiAccountEntity(
     val deviceId: String = "",
     val captchaToken: String = "",
     val nickname: String = "",
+    /** 登录方式（token / web 凭据），用于区分后续账号操作 */
+    val authType: String = "",
     val updatedAt: Long = System.currentTimeMillis()
 )

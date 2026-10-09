@@ -514,8 +514,9 @@ fun SettingsScreen(
             onClick = {
                 scope.launch {
                     SnackbarController.show("正在检查更新…")
-                    val release = runCatching { UpdateChecker.fetchLatestRelease() }.getOrNull()
+                    val result = runCatching { UpdateChecker.fetchLatestRelease() }.getOrNull()
                     val current = UpdateChecker.currentVersion(context)
+                    val release = (result as? UpdateChecker.CheckResult.Success)?.release
                     if (release == null) {
                         SnackbarController.show("检查更新失败，请检查网络")
                     } else if (UpdateChecker.compareVersions(release.tagName, current) > 0) {
@@ -650,13 +651,15 @@ fun SettingsScreen(
                             showDevMenu = false
                             // 调试用途：直接弹出更新弹窗（不判断是否已是最新版），预览弹窗 UI
                             scope.launch {
-                                val release = runCatching { UpdateChecker.fetchLatestRelease() }.getOrNull()
-                                updateRelease = release ?: UpdateChecker.Release(
-                                    tagName = "v1.2.4（预览）",
-                                    body = "这是调试预览弹窗，用于查看更新弹窗 UI（含镜像站下载按钮）。",
-                                    assets = emptyList(),
-                                    publishedAt = ""
-                                )
+                                val result = runCatching { UpdateChecker.fetchLatestRelease() }.getOrNull()
+                                updateRelease = (result as? UpdateChecker.CheckResult.Success)?.release
+                                    ?: UpdateChecker.Release(
+                                        tagName = "v1.2.4（预览）",
+                                        body = "这是调试预览弹窗，用于查看更新弹窗 UI（含镜像站下载按钮）。",
+                                        assets = emptyList(),
+                                        publishedAt = "",
+                                        htmlUrl = ""
+                                    )
                             }
                         },
                         modifier = Modifier.fillMaxWidth()

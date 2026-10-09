@@ -1,7 +1,6 @@
 /*
- * YueYing (月影) - A network drive share-link parser and high-speed downloader for Android.
+ * YunX (云析) - A network drive share-link parser and high-speed downloader for Android.
  * Copyright (C) 2026 CYQawa
- * Copyright (C) 2026 月影 (YueYing) Project
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,14 +19,12 @@
 package com.yueying.app.ui.screens
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -36,21 +33,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material.icons.outlined.SaveAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -58,7 +50,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yueying.app.ui.SnackbarController
@@ -69,17 +60,24 @@ import com.yueying.app.ui.resolve.ShareFileRow
 import com.yueying.app.ui.viewmodel.BaiduCloudUiState
 import com.yueying.app.ui.viewmodel.BaiduCloudViewModel
 import com.yueying.app.ui.viewmodel.ResolveViewModel
+import com.yueying.app.ui.components.YunXLoading
+import com.yueying.app.ui.theme.effectsDefault
+import com.yueying.app.ui.theme.ListGroupGap
+import com.yueying.app.ui.theme.effectsFast
+import com.yueying.app.ui.theme.listGroupShape
 
 /**
- * 转存到百度网盘弹窗：浏览百度个人网盘目录（只进文件夹），确认后转存到当前目录。
- * 复用 BaiduCloudViewModel 做目录浏览（与网盘页同一实例）。
+ * 「转存到百度网盘」步骤内容：浏览百度个人网盘目录（只进文件夹），确认后转存到当前目录。
+ *
+ * 不再是独立的底部弹窗 —— 它是解析页文件操作弹窗（`ResolveFileActionSheet`）里的二级步骤，
+ * 头部（返回箭头 + 标题 + 文件名）由 [SaveStepScaffold] 提供；复用 BaiduCloudViewModel
+ * 做目录浏览（与网盘页同一实例）。
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BaiduSaveSheet(
+internal fun BaiduSaveContent(
     resolveViewModel: ResolveViewModel,
     cloudViewModel: BaiduCloudViewModel,
-    onDismiss: () -> Unit
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current
     val cloudState by cloudViewModel.uiState.collectAsState()
@@ -100,48 +98,16 @@ fun BaiduSaveSheet(
     // ModalBottomSheet 为独立窗口，需自带 Snackbar 宿主
     val snackbarHostState = rememberGlobalSnackbarHostState()
 
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surface
+    SaveStepScaffold(
+        title = "转存到百度网盘",
+        subtitle = resolveViewModel.saveTarget?.fname ?: "",
+        onBack = onBack
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 32.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(
-                    modifier = Modifier.size(40.dp),
-                    shape = MaterialTheme.shapes.large,
-                    color = MaterialTheme.colorScheme.primaryContainer
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Outlined.SaveAlt,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "转存到百度网盘",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Text(
-                        text = resolveViewModel.saveTarget?.fname ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1
-                    )
-                }
-            }
-
             Spacer(modifier = Modifier.height(16.dp))
 
             CrumbBar(
@@ -161,7 +127,7 @@ fun BaiduSaveSheet(
             // 目录切换：淡入过渡（与网盘移动弹窗一致）
             AnimatedContent(
                 targetState = cloudState,
-                transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(140)) },
+                transitionSpec = { fadeIn(effectsDefault()) togetherWith fadeOut(effectsFast()) },
                 label = "baiduSaveState"
             ) { s ->
                 when (s) {
@@ -171,7 +137,7 @@ fun BaiduSaveSheet(
                         .height(200.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    YunXLoading()
                 }
 
                 is BaiduCloudUiState.Error -> Box(
@@ -215,11 +181,13 @@ fun BaiduSaveSheet(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(max = 280.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                            verticalArrangement = Arrangement.spacedBy(ListGroupGap)
                         ) {
-                            items(dirs, key = { it.fid }) { dir ->
+                            // 目录列表拼成一组：首/末项大圆角、中间项小圆角
+                            itemsIndexed(dirs, key = { _, d -> d.fid }) { index, dir ->
                                 ShareFileRow(
                                     file = dir,
+                                    shape = listGroupShape(index, dirs.size),
                                     onClick = { cloudViewModel.openFolder(dir) }
                                 )
                             }

@@ -1,7 +1,6 @@
 /*
- * YueYing (月影) - A network drive share-link parser and high-speed downloader for Android.
+ * YunX (云析) - A network drive share-link parser and high-speed downloader for Android.
  * Copyright (C) 2026 CYQawa
- * Copyright (C) 2026 月影 (YueYing) Project
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -32,7 +31,6 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -60,6 +58,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Download
@@ -82,7 +81,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -90,10 +88,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -108,8 +108,15 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.yueying.app.data.db.DownloadTaskEntity
 import com.yueying.app.data.download.DownloadStats
+import com.yueying.app.data.download.MagnetLink
 import com.yueying.app.ui.SnackbarController
 import com.yueying.app.ui.viewmodel.DownloadViewModel
+import com.yueying.app.ui.components.FileNameText
+import com.yueying.app.ui.components.YunXWavyProgress
+import com.yueying.app.ui.theme.effectsDefault
+import com.yueying.app.ui.theme.effectsFast
+import com.yueying.app.ui.theme.spatialDefault
+import com.yueying.app.ui.theme.spatialFast
 import java.io.File
 
 /**
@@ -120,6 +127,8 @@ import java.io.File
 fun DownloadScreen(
     scrollBehavior: TopAppBarScrollBehavior,
     viewModel: DownloadViewModel,
+    /** 下载调试开关（设置 → 关于云析 → 长按 → 开发调试）：开启后长按任务菜单里出现「调试信息」 */
+    downloadDebug: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -128,6 +137,23 @@ fun DownloadScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<DownloadTaskEntity?>(null) }
     var showDeleteAllConfirm by remember { mutableStateOf(false) }
+    // 「调试信息」页打开的任务 id（null = 不显示）。本页在「下载」Tab 内全屏展开，与 ResolveScreen 内嵌
+    // ShareDetailScreen 同款（不是 MainScreen 的叠加页，可直接复用下载页的卡片与格式化口径）。
+    var debugTaskId by rememberSaveable { mutableStateOf<Long?>(null) }
+    // 任务可能在调试页打开期间被删除：取不到就自动退回列表（不用再手动关页）
+    val debugTask = debugTaskId?.let { id -> tasks.firstOrNull { it.id == id } }
+    if (debugTask != null) {
+        DownloadDebugScreen(
+            task = debugTask,
+            stats = stats[debugTask.id],
+            viewModel = viewModel,
+            onPause = { viewModel.pause(debugTask.id) },
+            onResume = { viewModel.resume(debugTask.id) },
+            onBack = { debugTaskId = null },
+            modifier = modifier
+        )
+        return
+    }
 
     // Android 9- 写公共目录需要 WRITE_EXTERNAL_STORAGE
     val needLegacyPermission = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
@@ -184,7 +210,9 @@ fun DownloadScreen(
                             onPause = { viewModel.pause(task.id) },
                             onResume = { viewModel.resume(task.id) },
                             onRemove = { pendingDelete = task },
-                            onRedownload = { viewModel.redownload(task) }
+                            onRedownload = { viewModel.redownload(task) },
+                            downloadDebug = downloadDebug,
+                            onOpenDebug = { debugTaskId = it }
                         )
                     }
 
@@ -197,7 +225,9 @@ fun DownloadScreen(
                                 onPause = { viewModel.pause(it) },
                                 onResume = { viewModel.resume(it) },
                                 onRemove = { pendingDelete = it },
-                                onRedownload = { viewModel.redownload(it) }
+                                onRedownload = { viewModel.redownload(it) },
+                                downloadDebug = downloadDebug,
+                                onOpenDebug = { debugTaskId = it }
                             )
                         }
                     }
@@ -205,7 +235,24 @@ fun DownloadScreen(
             }
         }
 
+        // 添加任务 FAB（手动粘贴直链 / 磁力链接的唯一入口）
+        // ★ 曾经被 c829083「添加关于页」误删（连同 permissionLauncher/hasPermission 变成死代码、
+        //   空状态文案却还在说「点击右下角按钮」）——恢复时注意别再连着删掉。
+        FloatingActionButton(
+            onClick = {
+                if (needLegacyPermission && !hasPermission) {
+                    permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                } else {
+                    showAddDialog = true
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(20.dp)
+        ) {
+            Icon(Icons.Filled.Add, contentDescription = "添加下载任务")
         }
+    }
 
     if (showAddDialog) {
         AddDownloadDialog(
@@ -455,7 +502,10 @@ private fun FolderDownloadGroup(
     onPause: (Long) -> Unit,
     onResume: (Long) -> Unit,
     onRemove: (DownloadTaskEntity) -> Unit,
-    onRedownload: (DownloadTaskEntity) -> Unit
+    onRedownload: (DownloadTaskEntity) -> Unit,
+    /** 下载调试：开启时组内子任务的长按菜单也出现「调试信息」 */
+    downloadDebug: Boolean = false,
+    onOpenDebug: (Long) -> Unit = {}
 ) {
     var expanded by remember { mutableStateOf(true) }
     val completed = tasks.count { it.status == DownloadTaskEntity.STATUS_COMPLETED }
@@ -500,12 +550,10 @@ private fun FolderDownloadGroup(
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
+                    FileNameText(
                         text = folder,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        fontWeight = FontWeight.SemiBold
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
@@ -514,7 +562,8 @@ private fun FolderDownloadGroup(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                // 总体进度徽标
+                // 总体进度徽标（有子任务在合并分片时显示"合并中"，避免停在 100% 像卡死）
+                val merging = tasks.any { (stats[it.id]?.mergePercent ?: -1) >= 0 }
                 Surface(
                     shape = RoundedCornerShape(50),
                     color = if (done) {
@@ -524,7 +573,11 @@ private fun FolderDownloadGroup(
                     }
                 ) {
                     Text(
-                        text = if (done) "已完成" else "${(fraction * 100).toInt()}%",
+                        text = when {
+                            done -> "已完成"
+                            merging -> "合并中"
+                            else -> "${(fraction * 100).toInt()}%"
+                        },
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = if (done) {
@@ -546,13 +599,13 @@ private fun FolderDownloadGroup(
             // 展开区：总体进度条 + 子任务紧凑列表
             AnimatedVisibility(
                 visible = expanded,
-                enter = fadeIn(tween(200)) + expandVertically(tween(200), expandFrom = Alignment.Top),
-                exit = fadeOut(tween(150)) + shrinkVertically(tween(150), shrinkTowards = Alignment.Top)
+                enter = fadeIn(effectsDefault()) + expandVertically(spatialDefault(), expandFrom = Alignment.Top),
+                exit = fadeOut(effectsFast()) + shrinkVertically(spatialFast(), shrinkTowards = Alignment.Top)
             ) {
                 Column {
-                    // 总体进度条（已完成时隐藏）
+                    // 总体进度条（已完成时隐藏）；Expressive 波浪进度条（仅在有子任务下载中时起伏）
                     if (!done) {
-                        LinearProgressIndicator(
+                        YunXWavyProgress(
                             progress = { fraction },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -560,7 +613,8 @@ private fun FolderDownloadGroup(
                                 .height(4.dp)
                                 .clip(RoundedCornerShape(2.dp)),
                             color = MaterialTheme.colorScheme.primary,
-                            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                            waving = tasks.any { it.status == DownloadTaskEntity.STATUS_DOWNLOADING }
                         )
                     }
                     // 子任务列表（紧凑行，含子文件夹内文件）
@@ -575,7 +629,9 @@ private fun FolderDownloadGroup(
                                 onPause = { onPause(task.id) },
                                 onResume = { onResume(task.id) },
                                 onRemove = { onRemove(task) },
-                                onRedownload = { onRedownload(task) }
+                                onRedownload = { onRedownload(task) },
+                                downloadDebug = downloadDebug,
+                                onOpenDebug = onOpenDebug
                             )
                         }
                     }
@@ -596,14 +652,23 @@ private fun DownloadSubTaskRow(
     onPause: () -> Unit,
     onResume: () -> Unit,
     onRemove: () -> Unit,
-    onRedownload: () -> Unit
+    onRedownload: () -> Unit,
+    /** 下载调试开启时长按菜单出现「调试信息」 */
+    downloadDebug: Boolean = false,
+    onOpenDebug: (Long) -> Unit = {}
 ) {
     val context = LocalContext.current
     val isDownloading = task.status == DownloadTaskEntity.STATUS_DOWNLOADING ||
         task.status == DownloadTaskEntity.STATUS_PENDING
-    val fraction = if (task.totalSize > 0) {
-        (task.downloadedSize.toFloat() / task.totalSize).coerceIn(0f, 1f)
-    } else 0f
+    // 合并阶段进度（-1 = 不在合并）：合并时下载早就 100% 了，进度条改用合并百分比，
+    // 否则大文件会一直停在 100% 像卡死
+    val mergePercent = stats?.mergePercent ?: -1
+    val merging = mergePercent >= 0
+    val fraction = when {
+        merging -> mergePercent / 100f
+        task.totalSize > 0 -> (task.downloadedSize.toFloat() / task.totalSize).coerceIn(0f, 1f)
+        else -> 0f
+    }
     // 显示相对路径（去掉顶级目录前缀，如 "A/B/b.mp4" → "B/b.mp4"）
     val displayName = task.fileName.substringAfter('/')
     // 长按任务行弹出操作菜单（复制直链 / 重新下载 / 删除）
@@ -639,15 +704,14 @@ private fun DownloadSubTaskRow(
                 }
                 Spacer(modifier = Modifier.width(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
+                    FileNameText(
                         text = displayName,
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        fontWeight = FontWeight.Medium
                     )
                     Text(
                         text = when {
+                            merging -> "合并中 · $mergePercent%"
                             isDownloading && stats != null && stats.speed > 0 ->
                                 "${DownloadTaskEntity.statusText(task.status)} · ${formatSpeed(stats.speed)}"
                             task.status == DownloadTaskEntity.STATUS_COMPLETED && task.avgSpeed > 0 ->
@@ -704,10 +768,10 @@ private fun DownloadSubTaskRow(
             // 细进度条（完成态折叠，带过渡动画）
             AnimatedVisibility(
                 visible = task.status != DownloadTaskEntity.STATUS_COMPLETED,
-                enter = expandVertically(tween(200)) + fadeIn(tween(200)),
-                exit = shrinkVertically(tween(200)) + fadeOut(tween(150))
+                enter = expandVertically(spatialDefault()) + fadeIn(effectsDefault()),
+                exit = shrinkVertically(spatialFast()) + fadeOut(effectsFast())
             ) {
-                LinearProgressIndicator(
+                YunXWavyProgress(
                     progress = { fraction },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -719,7 +783,8 @@ private fun DownloadSubTaskRow(
                     } else {
                         MaterialTheme.colorScheme.primary
                     },
-                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    waving = task.status == DownloadTaskEntity.STATUS_DOWNLOADING
                 )
             }
         }
@@ -763,6 +828,16 @@ private fun DownloadSubTaskRow(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("删除任务")
                         }
+                        if (downloadDebug) {
+                            TextButton(onClick = {
+                                showMenu = false
+                                onOpenDebug(task.id)
+                            }) {
+                                Icon(Icons.Outlined.BugReport, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("调试信息")
+                            }
+                        }
                     }
                 },
                 confirmButton = {
@@ -780,14 +855,22 @@ private fun DownloadTaskCard(
     onPause: () -> Unit,
     onResume: () -> Unit,
     onRemove: () -> Unit,
-    onRedownload: () -> Unit
+    onRedownload: () -> Unit,
+    /** 下载调试开启时长按菜单出现「调试信息」 */
+    downloadDebug: Boolean = false,
+    onOpenDebug: (Long) -> Unit = {}
 ) {
     val context = LocalContext.current
     val isDownloading = task.status == DownloadTaskEntity.STATUS_DOWNLOADING ||
         task.status == DownloadTaskEntity.STATUS_PENDING
-    val fraction = if (task.totalSize > 0) {
-        (task.downloadedSize.toFloat() / task.totalSize).coerceIn(0f, 1f)
-    } else 0f
+    // 合并阶段进度（-1 = 不在合并）：合并时下载早就 100% 了，界面改显示合并百分比
+    val mergePercent = stats?.mergePercent ?: -1
+    val merging = mergePercent >= 0
+    val fraction = when {
+        merging -> mergePercent / 100f
+        task.totalSize > 0 -> (task.downloadedSize.toFloat() / task.totalSize).coerceIn(0f, 1f)
+        else -> 0f
+    }
     // 长按任务卡弹出操作菜单（复制直链 / 重新下载 / 删除）
     var showMenu by remember { mutableStateOf(false) }
 
@@ -822,16 +905,14 @@ private fun DownloadTaskCard(
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
+                    FileNameText(
                         text = task.fileName,
                         style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        fontWeight = FontWeight.Medium
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = taskStatusLine(task),
+                        text = if (merging) "合并中 · $mergePercent%" else taskStatusLine(task),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -885,26 +966,49 @@ private fun DownloadTaskCard(
             // 实时统计 + 进度条：完成态整体折叠（带高度过渡动画，不残留空白）
             AnimatedVisibility(
                 visible = task.status != DownloadTaskEntity.STATUS_COMPLETED,
-                enter = expandVertically(tween(200)) + fadeIn(tween(200)),
-                exit = shrinkVertically(tween(200)) + fadeOut(tween(150))
+                enter = expandVertically(spatialDefault()) + fadeIn(effectsDefault()),
+                exit = shrinkVertically(spatialFast()) + fadeOut(effectsFast())
             ) {
                 Column {
-                    if (isDownloading && stats != null && stats.speed > 0) {
-                        Text(
-                            text = "${formatSpeed(stats.speed)} · 剩余 ${formatRemain(stats.remainMillis)} · ${stats.chunkCount} 线程",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
+                    // 速度/线程行：随下载状态淡入淡出 + 高度过渡。
+                    // 原来用 if 直接增删这一行，暂停/开始时它"啪"地消失/出现，与上下元素位移很突兀。
+                    //
+                    // ★ 文本必须在这里（composable 作用域）算好，不能写进 AnimatedVisibility 的 content：
+                    //   content 是独立 lambda，里面享受不到 stats 的智能转换（编译报 nullable receiver）；
+                    //   而用 !! 会在"退出动画期间 visible 已为 false、stats 已变 null"时崩溃。
+                    //   退出动画期间沿用上一帧文本（lastStatsText），避免文字先消失再收高度。
+                    val liveStatsText = stats
+                        ?.takeIf { isDownloading && it.speed > 0 }
+                        ?.let { "${formatSpeed(it.speed)} · 剩余 ${formatRemain(it.remainMillis)} · ${it.chunkCount} 线程" }
+                    var lastStatsText by remember { mutableStateOf("") }
+                    LaunchedEffect(liveStatsText) {
+                        if (!liveStatsText.isNullOrEmpty()) lastStatsText = liveStatsText
                     }
-                    LinearProgressIndicator(
+                    AnimatedVisibility(
+                        visible = liveStatsText != null,
+                        enter = fadeIn(MaterialTheme.motionScheme.defaultEffectsSpec()) +
+                            expandVertically(MaterialTheme.motionScheme.defaultSpatialSpec()),
+                        exit = fadeOut(MaterialTheme.motionScheme.defaultEffectsSpec()) +
+                            shrinkVertically(MaterialTheme.motionScheme.defaultSpatialSpec())
+                    ) {
+                        Column {
+                            Text(
+                                text = lastStatsText,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                        }
+                    }
+                    YunXWavyProgress(
                         progress = { fraction },
                         modifier = Modifier.fillMaxWidth(),
                         color = when (task.status) {
                             DownloadTaskEntity.STATUS_FAILED -> MaterialTheme.colorScheme.error
                             else -> MaterialTheme.colorScheme.primary
                         },
-                        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        waving = task.status == DownloadTaskEntity.STATUS_DOWNLOADING
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
@@ -921,6 +1025,9 @@ private fun DownloadTaskCard(
                         } else {
                             formatSize(task.totalSize)
                         }
+                    } else if (merging) {
+                        // 合并阶段：底部不要再显示"已下载 100%"，明确告知正在合并
+                        "正在合并分片 · $mergePercent% · ${formatSize(task.totalSize)}"
                     } else {
                         progressText(task)
                     },
@@ -980,6 +1087,16 @@ private fun DownloadTaskCard(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("删除任务")
                         }
+                        if (downloadDebug) {
+                            TextButton(onClick = {
+                                showMenu = false
+                                onOpenDebug(task.id)
+                            }) {
+                                Icon(Icons.Outlined.BugReport, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("调试信息")
+                            }
+                        }
                     }
                 },
                 confirmButton = {
@@ -992,10 +1109,18 @@ private fun DownloadTaskCard(
 
 private fun copyToClipboard(context: Context, text: String) {
     val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    cm.setPrimaryClip(ClipData.newPlainText("yueying_url", text))
+    cm.setPrimaryClip(ClipData.newPlainText("yunx_url", text))
 }
 
-private fun taskStatusLine(task: DownloadTaskEntity): String {
+internal fun taskStatusLine(task: DownloadTaskEntity): String {
+    // 磁力任务在引擎拿到元数据之前 totalSize 一直是 0：这时按进度显示会变成「下载中」却没有任何数字，
+    // 看起来像卡死。BT 的元数据要等 DHT/tracker 找到 peer，慢起来是分钟级，明说在解析更诚实。
+    if (task.status == DownloadTaskEntity.STATUS_DOWNLOADING &&
+        task.totalSize <= 0 &&
+        MagnetLink.isMagnet(task.url)
+    ) {
+        return "正在解析磁力（等待元数据，可能需要一两分钟）"
+    }
     val status = DownloadTaskEntity.statusText(task.status)
     return if (task.totalSize > 0) {
         // 显示值钳制到 total（防恢复竞态残留导致显示超总大小）
@@ -1006,7 +1131,7 @@ private fun taskStatusLine(task: DownloadTaskEntity): String {
     }
 }
 
-private fun progressText(task: DownloadTaskEntity): String {
+internal fun progressText(task: DownloadTaskEntity): String {
     if (task.totalSize <= 0) return ""
     // 显示值钳制到 total（防恢复竞态残留导致显示超总大小）
     val shown = minOf(task.downloadedSize, task.totalSize)
@@ -1014,7 +1139,7 @@ private fun progressText(task: DownloadTaskEntity): String {
     return "已下载 ${formatSize(shown)} / ${formatSize(task.totalSize)} · $percent%"
 }
 
-private fun formatSize(bytes: Long): String {
+internal fun formatSize(bytes: Long): String {
     if (bytes <= 0) return "0 B"
     val units = arrayOf("B", "KB", "MB", "GB", "TB")
     var value = bytes.toDouble()
@@ -1026,7 +1151,7 @@ private fun formatSize(bytes: Long): String {
     return String.format("%.1f %s", value, units[i])
 }
 
-private fun formatSpeed(bytesPerSec: Long): String {
+internal fun formatSpeed(bytesPerSec: Long): String {
     if (bytesPerSec <= 0) return "0 B/s"
     val units = arrayOf("B/s", "KB/s", "MB/s", "GB/s")
     var value = bytesPerSec.toDouble()
@@ -1038,7 +1163,7 @@ private fun formatSpeed(bytesPerSec: Long): String {
     return String.format("%.1f %s", value, units[i])
 }
 
-private fun formatRemain(millis: Long): String {
+internal fun formatRemain(millis: Long): String {
     if (millis < 0) return "计算中"
     val sec = millis / 1000
     return when {
@@ -1111,6 +1236,7 @@ private fun AddDownloadDialog(
 ) {
     var url by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
+    val isMagnet = MagnetLink.isMagnet(url)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1133,17 +1259,32 @@ private fun AddDownloadDialog(
                     value = url,
                     onValueChange = {
                         url = it
-                        if (name.isBlank()) name = it.substringAfterLast('/').take(80)
+                        // 磁力链接的落盘名字由种子决定（引擎解析出元数据才知道），这里先拿 dn= 里的显示名占位
+                        if (name.isBlank()) {
+                            name = if (MagnetLink.isMagnet(it)) {
+                                MagnetLink.displayName(it)
+                            } else {
+                                it.substringAfterLast('/').take(80)
+                            }
+                        }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("文件直链 URL") },
+                    placeholder = { Text("文件直链 URL 或磁力链接") },
                     singleLine = true
                 )
+                if (isMagnet) {
+                    // 磁力只有 Gopeed 内核能下（内置分片下载器是纯 HTTP 实现），提前说清楚省得白等
+                    Text(
+                        text = "磁力链接需要 Gopeed 引擎：内核未导入或未切换时会直接提示，不会被当成普通链接去下载",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("保存文件名") },
+                    placeholder = { Text(if (isMagnet) "显示名称（可留空，完成后会用种子名覆盖）" else "保存文件名") },
                     singleLine = true
                 )
             }
@@ -1151,7 +1292,8 @@ private fun AddDownloadDialog(
         confirmButton = {
             Button(
                 onClick = { onConfirm(url.trim(), name.trim()) },
-                enabled = url.isNotBlank() && name.isNotBlank()
+                // 磁力允许留空文件名：真正的名字要等引擎拿到元数据（DownloadManager 会自己兜底）
+                enabled = url.isNotBlank() && (name.isNotBlank() || isMagnet)
             ) { Text("开始下载") }
         },
         dismissButton = {

@@ -1,7 +1,6 @@
 /*
- * YueYing (月影) - A network drive share-link parser and high-speed downloader for Android.
+ * YunX (云析) - A network drive share-link parser and high-speed downloader for Android.
  * Copyright (C) 2026 CYQawa
- * Copyright (C) 2026 月影 (YueYing) Project
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -31,6 +30,7 @@ import com.yueying.app.data.download.DownloadPlatform
 import com.yueying.app.data.network.XunleiApi
 import com.yueying.app.data.network.XunleiConstants
 import com.yueying.app.data.network.model.DownloadLink
+import com.yueying.app.data.network.model.ShareExpire
 import com.yueying.app.data.network.model.ShareFile
 import com.yueying.app.data.network.model.ShareInfo
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -411,6 +411,27 @@ class XunleiCloudViewModel(
         }
     }
 
+    /** 新建文件夹（当前目录下） */
+    fun createFolder(name: String) {
+        val newName = name.trim()
+        if (newName.isEmpty()) return
+        // 迅雷根目录用空串（见 loadRoot()），不是 "0"
+        val parentId = (uiState.value as? XunleiCloudUiState.Loaded)?.dirFid ?: ""
+        viewModelScope.launch {
+            isOperating = true
+            try {
+                val c = creds() ?: throw IllegalStateException("请先登录迅雷网盘")
+                api.createFolder(newName, parentId, c.first, c.second, c.third)
+                cloudMessage = "已创建文件夹「$newName」"
+                reloadCurrent()
+            } catch (e: Exception) {
+                cloudMessage = e.message ?: "新建文件夹失败"
+            } finally {
+                isOperating = false
+            }
+        }
+    }
+
     /** 移动 */
     fun moveFile(toDirFid: String) {
         val file = actionFile ?: return
@@ -433,7 +454,7 @@ class XunleiCloudViewModel(
     }
 
     /** 创建分享（迅雷必须带提取码；留空自动生成，可自定义 4 位）
-     *  @param expiredType 1=永久 2=1天 3=7天 4=30天（内部映射为 API 的 "-1"/"1"/"7"/"30"）
+     *  @param expiredType UI 中性码（见 [ShareExpire]），内部映射为 API 的 "-1"/"1"/"7"/"30"
      *  @param passCode 自定义提取码（4 位字母数字，留空则服务端自动生成）
      */
     fun shareFile(expiredType: Int, passCode: String = "") {
@@ -443,9 +464,10 @@ class XunleiCloudViewModel(
             try {
                 val c = creds() ?: throw IllegalStateException("请先登录迅雷网盘")
                 val info = api.createShare(
-                    listOf(file.fid), file.fname, expireDays(expiredType),
+                    listOf(file.fid), file.fname, ShareExpire.xunleiDays(expiredType),
                     c.first, c.second, c.third, passCode
                 ) ?: throw IllegalStateException("创建分享失败")
+                // 迅雷接口不返回有效期，用用户所选的中性码回填结果弹窗
                 shareResult = info.copy(expiredType = expiredType)
                 // 保留 actionFile：弹窗存活才能显示分享结果
             } catch (e: Exception) {
@@ -542,7 +564,7 @@ class XunleiCloudViewModel(
         }
     }
 
-    /** 批量分享 */
+    /** 批量分享（@param expiredType UI 中性码，转换见 [shareFile]） */
     fun shareSelected(expiredType: Int, passCode: String = "") {
         val files = _selected.toList()
         if (files.isEmpty()) return
@@ -553,7 +575,7 @@ class XunleiCloudViewModel(
                 val info = api.createShare(
                     files.map { it.fid },
                     if (files.size == 1) files[0].fname else "分享 ${files.size} 个文件",
-                    expireDays(expiredType), c.first, c.second, c.third, passCode
+                    ShareExpire.xunleiDays(expiredType), c.first, c.second, c.third, passCode
                 ) ?: throw IllegalStateException("创建分享失败")
                 shareResult = info.copy(expiredType = expiredType)
                 exitMultiSelect()
@@ -563,14 +585,6 @@ class XunleiCloudViewModel(
                 isOperating = false
             }
         }
-    }
-
-    /** 有效期类型 → API 天数：1=永久 2=1天 3=7天 4=30天 */
-    private fun expireDays(type: Int): String = when (type) {
-        2 -> "1"
-        3 -> "7"
-        4 -> "30"
-        else -> "-1"
     }
 
     /** 批量移动 */

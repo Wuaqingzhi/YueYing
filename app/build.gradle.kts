@@ -102,13 +102,20 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation(libs.material)   // 原 libs.material.color.utilities -> 改为官方 Material 主库（含 color.utilities 包）
+    implementation(libs.material)
+
+    // Gopeed 内置下载引擎
+    implementation(files("libs/gopeed-classes.jar"))
 
     implementation(libs.room.runtime)
-    implementation(libs.room.ktx)          // 提供协程扩展，如 Flow、suspend
+    implementation(libs.room.ktx)
     ksp(libs.room.compiler)
 
+    // GitHub README 的 GFM 渲染
+    implementation(libs.markdownRenderer)
+
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.webkit)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -122,4 +129,9 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    // 强制 kotlin-stdlib 与项目 Kotlin 2.1.0 对齐
+    constraints {
+        implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
+    }
 }

@@ -853,10 +853,13 @@ private fun Pan123ShareSheet(
             Button(
                 onClick = {
                     val pwd = if (withPassword) passcode.takeIf { it.isNotBlank() } else null
-                    if (viewModel.multiSelectMode) {
-                        viewModel.shareSelected(period, pwd)
-                    } else {
-                        viewModel.shareFile(period, pwd)
+                    val selectedPeriod = period
+                    if (selectedPeriod != null) {
+                        if (viewModel.multiSelectMode) {
+                            viewModel.shareSelected(selectedPeriod, pwd)
+                        } else {
+                            viewModel.shareFile(selectedPeriod, pwd)
+                        }
                     }
                     onDismiss()
                 },

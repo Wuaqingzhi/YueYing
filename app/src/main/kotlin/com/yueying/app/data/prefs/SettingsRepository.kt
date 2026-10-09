@@ -59,6 +59,16 @@ class SettingsRepository(context: Context) {
             prefs.edit().putString("download_dir_uri", value).apply()
         }
 
+    /**
+     * Gopeed 引擎的下载目录（真实文件系统路径）；空 = 默认公共 Download 根目录。
+     * 引擎是原生核心写不了 SAF content://，只能拿真实路径。
+     */
+    var engineDownloadDir: String
+        get() = prefs.getString("engine_download_dir", "") ?: ""
+        set(value) {
+            prefs.edit().putString("engine_download_dir", value.trim()).apply()
+        }
+
     /** 最大同时下载任务数（默认 1：前台任务吃满带宽，其余排队；参考 IDM 默认单任务满速） */
     var maxConcurrentDownloads: Int
         get() = prefs.getInt("max_concurrent_downloads", DEFAULT_MAX_CONCURRENT_DOWNLOADS)
@@ -94,11 +104,72 @@ class SettingsRepository(context: Context) {
             prefs.edit().putBoolean("notification_show_speed", value).apply()
         }
 
+    /**
+     * 下载引擎：[ENGINE_BUILTIN]（默认，自带 Kotlin 分片下载器）
+     * 或 [ENGINE_GOPEED]（内置 Gopeed 引擎，需先导入 AAR）。
+     */
+    var downloadEngine: String
+        get() = prefs.getString("download_engine", ENGINE_BUILTIN)?.takeIf {
+            it == ENGINE_BUILTIN || it == ENGINE_GOPEED
+        } ?: ENGINE_BUILTIN
+        set(value) {
+            prefs.edit().putString("download_engine", value).apply()
+        }
+
+    /** 夸克取链方式：true=免转存（直接换下载直链，默认）；false=先转存到临时目录再取链 */
+    var quarkNoSaveDownload: Boolean
+        get() = prefs.getBoolean("quark_no_save_download", true)
+        set(value) {
+            prefs.edit().putBoolean("quark_no_save_download", value).apply()
+        }
+
     /** 桌面图标样式：0=经典图标(icon)，1=新图标(icon2)；切换经 activity-alias 动态生效 */
     var appIconVariant: Int
         get() = prefs.getInt("app_icon_variant", 0)
         set(value) {
             prefs.edit().putInt("app_icon_variant", value.coerceIn(0, 1)).apply()
+        }
+
+    /** 文件名显示方式：false=单行跑马灯滚动（默认），true=多行折行显示 */
+    var fileNameMultiLine: Boolean
+        get() = prefs.getBoolean("file_name_multi_line", false)
+        set(value) {
+            prefs.edit().putBoolean("file_name_multi_line", value).apply()
+        }
+
+    /** 自动识别剪贴板分享链接：关闭后完全不读取剪贴板（默认开启） */
+    var clipboardSuggestEnabled: Boolean
+        get() = prefs.getBoolean("clipboard_suggest_enabled", true)
+        set(value) {
+            prefs.edit().putBoolean("clipboard_suggest_enabled", value).apply()
+        }
+
+    /** 接受预发布版更新：检查更新时把 GitHub Pre-release 也算作新版本（默认关闭） */
+    var acceptPrereleaseUpdate: Boolean
+        get() = prefs.getBoolean("accept_prerelease_update", false)
+        set(value) {
+            prefs.edit().putBoolean("accept_prerelease_update", value).apply()
+        }
+
+    /** 诊断模式：开启后把 db/crypto/download/webview/network/operation 六模块详细日志写进私有目录 */
+    var diagnosticMode: Boolean
+        get() = prefs.getBoolean("diagnostic_mode", false)
+        set(value) {
+            prefs.edit().putBoolean("diagnostic_mode", value).apply()
+        }
+
+    /** 下载调试：按任务记录事件流，关闭会清空全部日志 */
+    var downloadDebug: Boolean
+        get() = prefs.getBoolean("download_debug", false)
+        set(value) {
+            prefs.edit().putBoolean("download_debug", value).apply()
+        }
+
+    /** 全量 SHA-256 校验（默认关）：保存文件时算整文件摘要写进下载调试日志 */
+    var fullFileSha256: Boolean
+        get() = prefs.getBoolean("download_full_sha256", false)
+        set(value) {
+            prefs.edit().putBoolean("download_full_sha256", value).apply()
         }
 
     /** 忽略 SSL 证书校验（抓包调试用，隐藏菜单开启；默认关闭） */
@@ -136,6 +207,34 @@ class SettingsRepository(context: Context) {
             prefs.edit().putLong("theme_seed_color", value).apply()
         }
 
+    /** 自定义 GitHub 下载镜像前缀；null/空 = 内置默认镜像（UpdateChecker.MIRROR_PREFIX） */
+    var githubMirrorPrefix: String?
+        get() = prefs.getString("github_mirror_prefix", null)
+        set(value) {
+            prefs.edit().putString("github_mirror_prefix", value).apply()
+        }
+
+    /** 是否启用 HTTP 代理（默认关闭，直连） */
+    var proxyEnabled: Boolean
+        get() = prefs.getBoolean("proxy_enabled", false)
+        set(value) {
+            prefs.edit().putBoolean("proxy_enabled", value).apply()
+        }
+
+    /** 代理主机地址，空串表示未配置 */
+    var proxyHost: String
+        get() = prefs.getString("proxy_host", "") ?: ""
+        set(value) {
+            prefs.edit().putString("proxy_host", value).apply()
+        }
+
+    /** 代理端口（默认 7890） */
+    var proxyPort: Int
+        get() = prefs.getInt("proxy_port", DEFAULT_PROXY_PORT)
+        set(value) {
+            prefs.edit().putInt("proxy_port", value.coerceIn(1, 65535)).apply()
+        }
+
     /** 网盘账号云端同步：开启后网盘账号自动上传云端，换机/重装登录自动恢复（默认关闭） */
     var syncCloudEnabled: Boolean
         get() = prefs.getBoolean("sync_cloud_enabled", false)
@@ -145,10 +244,18 @@ class SettingsRepository(context: Context) {
 
     companion object {
         const val DEFAULT_DOWNLOAD_THREADS = 32
+
+        /** 下载引擎标识：内置 Kotlin 分片下载器 */
+        const val ENGINE_BUILTIN = "builtin"
+
+        /** 下载引擎标识：内置 Gopeed 引擎（gomobile 核心，需用户导入 AAR） */
+        const val ENGINE_GOPEED = "gopeed"
+
         const val MAX_DOWNLOAD_THREADS = 512
         const val XUNLEI_DOWNLOAD_THREADS = 8
         const val DEFAULT_MAX_CONCURRENT_DOWNLOADS = 1
         const val DEFAULT_DOWNLOAD_RETRY_COUNT = 3
+        const val DEFAULT_PROXY_PORT = 7890
 
         /** 默认主题种子色：Material Blue（与内置默认方案一致） */
         const val DEFAULT_SEED_COLOR = 0xFF415F91L

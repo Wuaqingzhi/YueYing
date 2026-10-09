@@ -1,7 +1,6 @@
 /*
- * YueYing (月影) - A network drive share-link parser and high-speed downloader for Android.
+ * YunX (云析) - A network drive share-link parser and high-speed downloader for Android.
  * Copyright (C) 2026 CYQawa
- * Copyright (C) 2026 月影 (YueYing) Project
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -95,6 +94,12 @@ object C139Constants {
 
     /** 列目录（可加 type:"folder" 仅列文件夹） */
     const val FILE_LIST_URL = "$CLOUD_BASE/hcy/file/list"
+
+    /**
+     * 新建目录 / 上传预创建（同一个端点，靠 `type` 区分：`folder` = 建目录、`file` = 上传；
+     * 文档 §3.13「新建目录 / 上传预创建 · POST $cloudBase/file/create」）
+     */
+    const val FILE_CREATE_URL = "$CLOUD_BASE/hcy/file/create"
 
     /** 重命名 */
     const val FILE_UPDATE_URL = "$CLOUD_BASE/hcy/file/update"

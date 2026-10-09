@@ -1,7 +1,6 @@
 /*
- * YueYing (月影) - A network drive share-link parser and high-speed downloader for Android.
+ * YunX (云析) - A network drive share-link parser and high-speed downloader for Android.
  * Copyright (C) 2026 CYQawa
- * Copyright (C) 2026 月影 (YueYing) Project
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -441,6 +440,30 @@ class QuarkCloudViewModel(
                 }
             } catch (e: Exception) {
                 cloudMessage = e.message ?: "重命名失败"
+            } finally {
+                isOperating = false
+            }
+        }
+    }
+
+    /** 新建文件夹（当前目录下） */
+    fun createFolder(name: String) {
+        val newName = name.trim()
+        if (newName.isEmpty()) return
+        val parentFid = (uiState.value as? QuarkCloudUiState.Loaded)?.dirFid ?: "0"
+        viewModelScope.launch {
+            isOperating = true
+            try {
+                val cookie = cookieProvider()
+                if (cookie.isNullOrBlank()) {
+                    cloudMessage = "请先登录夸克网盘"
+                    return@launch
+                }
+                api.createFolder(newName, parentFid, cookie)
+                cloudMessage = "已创建文件夹「$newName」"
+                reloadCurrent()
+            } catch (e: Exception) {
+                cloudMessage = e.message ?: "新建文件夹失败"
             } finally {
                 isOperating = false
             }

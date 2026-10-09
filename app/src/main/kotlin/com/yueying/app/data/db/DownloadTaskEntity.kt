@@ -1,7 +1,6 @@
 /*
- * YueYing (月影) - A network drive share-link parser and high-speed downloader for Android.
+ * YunX (云析) - A network drive share-link parser and high-speed downloader for Android.
  * Copyright (C) 2026 CYQawa
- * Copyright (C) 2026 月影 (YueYing) Project
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -54,6 +53,12 @@ data class DownloadTaskEntity(
     /** 下载来源平台标识（用于按平台应用下载线程数设置）；通用/手动添加为空串 */
     @ColumnInfo(defaultValue = "''")
     val platform: String = "",
+    /**
+     * 走 Gopeed 引擎下载时的引擎任务 ID；空串 = 这条任务由内置分片下载器执行。
+     * 有值时进度由引擎同步协程回写（见 DownloadManager.startEngineSync），暂停/继续/删除都要转发给引擎。
+     */
+    @ColumnInfo(defaultValue = "''")
+    val engineTaskId: String = "",
     /** 下载完成时的平均速度（字节/秒）；完成态展示用，进行中为 0 */
     @ColumnInfo(defaultValue = "0")
     val avgSpeed: Long = 0,

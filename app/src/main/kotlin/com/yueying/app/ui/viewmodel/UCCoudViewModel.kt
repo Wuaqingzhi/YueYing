@@ -1,7 +1,6 @@
 /*
- * YueYing (月影) - A network drive share-link parser and high-speed downloader for Android.
+ * YunX (云析) - A network drive share-link parser and high-speed downloader for Android.
  * Copyright (C) 2026 CYQawa
- * Copyright (C) 2026 月影 (YueYing) Project
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -31,6 +30,7 @@ import com.yueying.app.data.download.DownloadPlatform
 import com.yueying.app.data.network.UCApi
 import com.yueying.app.data.network.UCConstants
 import com.yueying.app.data.network.model.DownloadLink
+import com.yueying.app.data.network.model.ShareExpire
 import com.yueying.app.data.network.model.ShareFile
 import com.yueying.app.data.network.model.ShareInfo
 import com.yueying.app.data.network.model.ShareToken
@@ -277,7 +277,7 @@ class UCCoudViewModel(
             title = file.fname,
             urlType = 1,       // 1=无提取码
             passcode = "",
-            expiredType = 2,   // 2=1 天
+            expiredType = ShareExpire.ONE_DAY,   // UC 的 expired_type 就等于中性码
             cookie = cookie
         ) ?: return null
         // ② 查分享信息拿**对外分享码 pwd_id**（share_id 是内部 ID，直接当 pwd_id 调 token 会 41006 分享不存在）
@@ -499,6 +499,30 @@ class UCCoudViewModel(
                 }
             } catch (e: Exception) {
                 cloudMessage = e.message ?: "重命名失败"
+            } finally {
+                isOperating = false
+            }
+        }
+    }
+
+    /** 新建文件夹（当前目录下） */
+    fun createFolder(name: String) {
+        val newName = name.trim()
+        if (newName.isEmpty()) return
+        val parentFid = (uiState.value as? UCCloudUiState.Loaded)?.dirFid ?: "0"
+        viewModelScope.launch {
+            isOperating = true
+            try {
+                val cookie = cookieProvider()
+                if (cookie.isNullOrBlank()) {
+                    cloudMessage = "请先登录 UC 网盘"
+                    return@launch
+                }
+                api.createFolder(newName, parentFid, cookie)
+                cloudMessage = "已创建文件夹「$newName」"
+                reloadCurrent()
+            } catch (e: Exception) {
+                cloudMessage = e.message ?: "新建文件夹失败"
             } finally {
                 isOperating = false
             }

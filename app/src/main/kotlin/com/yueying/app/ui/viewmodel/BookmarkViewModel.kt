@@ -1,7 +1,6 @@
 /*
- * YueYing (月影) - A network drive share-link parser and high-speed downloader for Android.
+ * YunX (云析) - A network drive share-link parser and high-speed downloader for Android.
  * Copyright (C) 2026 CYQawa
- * Copyright (C) 2026 月影 (YueYing) Project
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -37,6 +36,14 @@ import kotlinx.coroutines.launch
 class BookmarkViewModel(private val dao: BookmarkDao) : ViewModel() {
 
     val bookmarks: StateFlow<List<BookmarkEntity>> = dao.observeAll()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    /** 已添加到主页快捷方式的收藏（主页下方网格） */
+    val homeBookmarks: StateFlow<List<BookmarkEntity>> = dao.observeHomePinned()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -90,6 +97,22 @@ class BookmarkViewModel(private val dao: BookmarkDao) : ViewModel() {
         viewModelScope.launch {
             dao.delete(id)
             SnackbarController.show("已删除")
+        }
+    }
+
+    /** 添加 / 移除主页快捷方式 */
+    fun setHomePinned(id: Long, pinned: Boolean) {
+        viewModelScope.launch {
+            dao.updateHomePinned(id, pinned)
+            SnackbarController.show(if (pinned) "已添加到主页" else "已从主页移除")
+        }
+    }
+
+    /** 自定义主页快捷方式色块文字（空串 = 自动取标题前几个字） */
+    fun setHomeLabel(id: Long, label: String) {
+        viewModelScope.launch {
+            dao.updateHomeLabel(id, label.trim())
+            SnackbarController.show(if (label.isBlank()) "已恢复自动文字" else "已更新快捷方式文字")
         }
     }
 
