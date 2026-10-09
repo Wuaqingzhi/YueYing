@@ -53,7 +53,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.Article
+import androidx.compose.material.icons.outlined.CloudDownload
+import androidx.compose.material.icons.outlined.ContentPaste
+import androidx.compose.material.icons.outlined.NewReleases
 import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.CloudSync
@@ -357,6 +359,19 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        // 免转存下载
+        SettingsItem(
+            icon = Icons.Outlined.CloudDownload,
+            title = "免转存下载",
+            description = if (settingsRepo.quarkNoSaveDownload) "夸克：解析出直链后直接下载，不转存到网盘" else "夸克：先转存到临时目录再取链",
+            onClick = {
+                settingsRepo.quarkNoSaveDownload = !settingsRepo.quarkNoSaveDownload
+            },
+            trailing = { Switch(checked = settingsRepo.quarkNoSaveDownload, onCheckedChange = null) }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         // 用户体验与系统适配：锁屏保持下载 / 通知栏进度样式
         SettingsItem(
             icon = Icons.Outlined.Power,
@@ -409,6 +424,16 @@ fun SettingsScreen(
 
         SectionLabel("外观")
         SettingsItem(
+            icon = Icons.Outlined.ContentPaste,
+            title = "自动识别剪贴板",
+            description = if (ThemeController.clipboardSuggestEnabled) "复制分享链接后自动提示解析" else "已关闭，应用不再读取剪贴板",
+            onClick = { ThemeController.setClipboardSuggestEnabled(context, !ThemeController.clipboardSuggestEnabled) },
+            trailing = { Switch(checked = ThemeController.clipboardSuggestEnabled, onCheckedChange = null) }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        SettingsItem(
             icon = Icons.Outlined.Palette,
             title = "主题与外观",
             description = "主题色、动态色彩与深色模式",
@@ -437,6 +462,17 @@ fun SettingsScreen(
                     }
                 }
             }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // 接受预发布版更新
+        SettingsItem(
+            icon = Icons.Outlined.NewReleases,
+            title = "接受预发布版更新",
+            description = if (ThemeController.acceptPrereleaseUpdate) "检查更新时包含 GitHub Pre-release（可能不稳定）" else "只接收正式版更新",
+            onClick = { ThemeController.setAcceptPrereleaseUpdate(context, !ThemeController.acceptPrereleaseUpdate) },
+            trailing = { Switch(checked = ThemeController.acceptPrereleaseUpdate, onCheckedChange = null) }
         )
 
         Spacer(modifier = Modifier.height(8.dp))
