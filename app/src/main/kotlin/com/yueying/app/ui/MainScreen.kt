@@ -811,10 +811,6 @@ fun MainScreen() {
                         Icon(Icons.Outlined.Bookmarks, contentDescription = "收藏网盘链接")
                     }
                 }
-                // 公告铃铛
-                IconButton(onClick = { showAnnouncements = true }) {
-                    Icon(Icons.Outlined.Notifications, contentDescription = "公告")
-                }
             },
             scrollBehavior = scrollBehavior,
             colors = TopAppBarDefaults.largeTopAppBarColors(

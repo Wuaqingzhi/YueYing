@@ -337,7 +337,7 @@ fun DownloadEngineScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 16.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             // 本页不做自己的入场动画：它是由设置页那一行「长」出来的（容器变换，见 MainScreen 的
             // sharedBounds / OverlayPage），再叠一层淡入上移只会和形变打架。

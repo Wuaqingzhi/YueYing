@@ -18,6 +18,9 @@
  */
 
 package com.yueying.app.ui.screens
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import android.Manifest
 import android.app.Activity
 import android.content.Context
@@ -55,6 +58,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Article
 import androidx.compose.material.icons.outlined.ArrowForward
+import androidx.compose.material.icons.outlined.SyncAlt
 import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material.icons.outlined.NewReleases
@@ -296,7 +300,7 @@ fun SettingsScreen(
 
         SectionLabel("下载")
         SettingsItem(
-            icon = Icons.Outlined.ArrowForward,
+            icon = Icons.Outlined.SyncAlt,
             title = "下载引擎",
             description = if (settingsRepo.downloadEngine == SettingsRepository.ENGINE_GOPEED)
                 "Gopeed 引擎（内置 gomobile 核心，按真实路径落盘）"
@@ -1066,8 +1070,12 @@ fun SettingsScreen(
         )
     }
 
-    // 下载引擎页面
-    if (showEngineScreen) {
+    // 下载引擎页面（带淡入过渡）
+    AnimatedVisibility(
+        visible = showEngineScreen,
+        enter = fadeIn(androidx.compose.animation.core.tween(300)),
+        exit = fadeOut(androidx.compose.animation.core.tween(200))
+    ) {
         DownloadEngineScreen(onBack = { showEngineScreen = false })
     }
 }
