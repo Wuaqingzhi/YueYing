@@ -34,8 +34,8 @@ android {
         applicationId = "com.yueying.app"
         minSdk = 23
         targetSdk = 34
-        versionCode = 16
-        versionName = "2.8.0"
+        versionCode = 19
+        versionName = "3.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
