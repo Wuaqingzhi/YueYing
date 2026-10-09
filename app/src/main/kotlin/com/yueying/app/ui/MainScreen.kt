@@ -652,7 +652,9 @@ fun MainScreen() {
     }
 
     // 首次启动引导页：全屏覆盖（优先级最高）
-    if (showOnboarding) {
+    // 跳过首次引导页
+    showOnboarding = false
+    if (false && showOnboarding) {
         OnboardingScreen(
             onFinish = {
                 context.getSharedPreferences("yueying_prefs", android.content.Context.MODE_PRIVATE)
