@@ -54,6 +54,7 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Article
+import androidx.compose.material.icons.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material.icons.outlined.NewReleases
@@ -122,6 +123,7 @@ import com.yueying.app.data.sync.AccountSyncManager
 import com.yueying.app.data.update.UpdateChecker
 import com.yueying.app.ui.SnackbarController
 import com.yueying.app.ui.theme.ThemeController
+import com.yueying.app.ui.screens.DownloadEngineScreen
 import com.yueying.app.util.LogExporter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -203,6 +205,7 @@ fun SettingsScreen(
     var showConcurrencyDialog by remember { mutableStateOf(false) }
     var showSpeedDialog by remember { mutableStateOf(false) }
     var showRetryDialog by remember { mutableStateOf(false) }
+    var showEngineScreen by remember { mutableStateOf(false) }
     // 用户体验与系统适配：锁屏保持下载 / 通知栏速度
     var keepLocked by remember { mutableStateOf(settingsRepo.keepDownloadWhenLocked) }
     var showSpeed by remember { mutableStateOf(settingsRepo.notificationShowSpeed) }
@@ -293,17 +296,13 @@ fun SettingsScreen(
 
         SectionLabel("下载")
         SettingsItem(
-            icon = Icons.Outlined.Tune,
+            icon = Icons.Outlined.ArrowForward,
             title = "下载引擎",
             description = if (settingsRepo.downloadEngine == SettingsRepository.ENGINE_GOPEED)
-                "Gopeed 引擎（支持磁力链接/BT下载）"
+                "Gopeed 引擎（内置 gomobile 核心，按真实路径落盘）"
             else
-                "内置分片下载器（默认）",
-            onClick = {
-                settingsRepo.downloadEngine = if (settingsRepo.downloadEngine == SettingsRepository.ENGINE_GOPEED)
-                    SettingsRepository.ENGINE_BUILTIN else SettingsRepository.ENGINE_GOPEED
-            },
-            trailing = { Switch(checked = settingsRepo.downloadEngine == SettingsRepository.ENGINE_GOPEED, onCheckedChange = null) }
+                "内置分片下载器（默认，走 SAF/MediaStore 保存）",
+            onClick = { showEngineScreen = true }
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -1065,6 +1064,11 @@ fun SettingsScreen(
                 TextButton(onClick = { showBatteryDialog = false }) { Text("暂不") }
             }
         )
+    }
+
+    // 下载引擎页面
+    if (showEngineScreen) {
+        DownloadEngineScreen(onBack = { showEngineScreen = false })
     }
 }
 
