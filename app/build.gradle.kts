@@ -33,17 +33,25 @@ plugins {
 //   YUEYING_KEY_PASSWORD       密钥口令
 // 都缺任意一项 ⇒ release 的 signingConfig 为 null，产物是 app-release-unsigned.apk；
 // 想在本地出正式签名包：在 app/ 目录放 yueying.jks + keystore.properties（storeFile/storePassword/keyAlias/keyPassword）即可。
-val keystoreProps = java.util.Properties()
+// 注意：脚本作用域解析不了 java.util，这里用纯 Kotlin 逐行解析 key=value 文件。
+val keystoreValues = mutableMapOf<String, String>()
 val keystorePropsFile = file("keystore.properties")
 if (keystorePropsFile.isFile) {
-    keystorePropsFile.inputStream().use { keystoreProps.load(it) }
+    keystorePropsFile.readLines().forEach { line ->
+        val idx = line.indexOf('=')
+        if (idx > 0) {
+            val k = line.substring(0, idx).trim()
+            val v = line.substring(idx + 1).trim()
+            if (k.isNotEmpty()) keystoreValues[k] = v
+        }
+    }
 }
 fun prop(name: String, env: String): String? =
-    keystoreProps.getProperty(name)?.takeIf { it.isNotBlank() }
+    keystoreValues[name]?.takeIf { it.isNotBlank() }
         ?: System.getenv(env)?.takeIf { it.isNotBlank() }
 
 val releaseKeystorePath: String? =
-    keystoreProps.getProperty("storeFile")?.takeIf { it.isNotBlank() }
+    keystoreValues["storeFile"]?.takeIf { it.isNotBlank() }
         ?: System.getenv("YUEYING_KEYSTORE_FILE")?.takeIf { it.isNotBlank() }
 val releaseSigningReady: Boolean = releaseKeystorePath != null &&
     file(releaseKeystorePath).isFile &&
