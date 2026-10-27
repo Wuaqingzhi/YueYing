@@ -32,6 +32,9 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Box
@@ -1118,10 +1121,10 @@ fun MainScreen(
                             }
                         },
                         scrollBehavior = scrollBehavior,
-                        // 顶栏透明，让底层粉紫蓝渐变透出，形成上下贯通的玻璃感
+                        // 顶栏与背景同色，干净无渐变
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Color.Transparent,
-                            scrolledContainerColor = Color.Transparent
+                            containerColor = Color(0xFFF7F8FA),
+                            scrolledContainerColor = Color(0xFFFFFFFF)
                         )
                     )
                 }
@@ -1367,23 +1370,10 @@ fun MainScreen(
                         }
                     }
                 } else {
-                    // 竖屏：Scaffold + 底部导航栏；外层铺玻璃感柔和渐变（粉→紫→蓝），让半透明导航/卡片透出折射感
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color(0xFFFCE4EC), // 顶部浅粉
-                                        Color(0xFFEDE7F6), // 中部浅紫
-                                        Color(0xFFE3F2FD)  // 底部浅蓝
-                                    )
-                                )
-                            )
-                    ) {
+                    // 竖屏：Scaffold + 悬浮底部导航（干净白底，卡片白/浅灰区分隔）
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
-                        containerColor = Color.Transparent,
+                        containerColor = Color(0xFFF7F8FA), // 极浅冷灰底，卡片纯白凸起
                         snackbarHost = { SnackbarHost(snackbarHostState) },
                         topBar = { topBarContent() },
                         bottomBar = {
@@ -1400,7 +1390,6 @@ fun MainScreen(
                         ) {
                             tabContent()
                         }
-                    }
                     }
                 }
 
@@ -1695,25 +1684,21 @@ private fun MainBottomBar(
     currentTab: MainTab,
     onTabSelected: (MainTab) -> Unit
 ) {
-    // iOS 风格磨砂 Tab Bar：半透明白底 + 顶部细分割线，选中项纯图标变色（无 Material 胶囊背景）
+    // iOS 17 悬浮胶囊 Tab Bar：白色大圆角胶囊，左右留边，浮在渐变内容之上
     val selectedColor = Color(0xFF007AFF) // iOS 蓝
     val unselectedColor = Color(0xFF8E8E93)
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xD9FFFFFF)) // ~85% 不透明白，透出底层彩色渐变形成磨砂感
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .shadow(elevation = 10.dp, shape = RoundedCornerShape(28.dp))
+            .clip(RoundedCornerShape(28.dp))
+            .background(Color.White)
     ) {
-        // 顶部 0.5dp 细分割线（iOS UITabBar 同款）
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(0.5.dp)
-                .background(Color(0x33000000))
-        )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp),
+                .height(60.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
