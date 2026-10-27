@@ -1121,10 +1121,9 @@ fun MainScreen(
                             }
                         },
                         scrollBehavior = scrollBehavior,
-                        // 顶栏与背景同色，干净无渐变
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Color(0xFFF7F8FA),
-                            scrolledContainerColor = Color(0xFFFFFFFF)
+                            containerColor = Color.White,
+                            scrolledContainerColor = Color.White
                         )
                     )
                 }
@@ -1370,10 +1369,10 @@ fun MainScreen(
                         }
                     }
                 } else {
-                    // 竖屏：Scaffold + 悬浮底部导航（干净白底，卡片白/浅灰区分隔）
+                    // 竖屏：纯白底 + 悬浮磨砂胶囊导航（无渐变）
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
-                        containerColor = Color(0xFFF7F8FA), // 极浅冷灰底，卡片纯白凸起
+                        containerColor = Color.White,
                         snackbarHost = { SnackbarHost(snackbarHostState) },
                         topBar = { topBarContent() },
                         bottomBar = {
@@ -1691,9 +1690,9 @@ private fun MainBottomBar(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp)
-            .shadow(elevation = 10.dp, shape = RoundedCornerShape(28.dp))
+            .shadow(elevation = 8.dp, shape = RoundedCornerShape(28.dp))
             .clip(RoundedCornerShape(28.dp))
-            .background(Color.White)
+            .background(Color(0xCCFFFFFF)) // 80% 半透明白 = 磨砂玻璃感
     ) {
         Row(
             modifier = Modifier
