@@ -30,6 +30,8 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Box
@@ -86,6 +88,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import android.Manifest
 import android.content.Context
@@ -1371,9 +1374,9 @@ fun MainScreen(
                             .background(
                                 Brush.verticalGradient(
                                     colors = listOf(
-                                        Color(0xFFFDF4F5), // 顶部浅粉
-                                        Color(0xFFF3EEFB), // 中部浅紫
-                                        Color(0xFFEAF2FB)  // 底部浅蓝
+                                        Color(0xFFFCE4EC), // 顶部浅粉
+                                        Color(0xFFEDE7F6), // 中部浅紫
+                                        Color(0xFFE3F2FD)  // 底部浅蓝
                                     )
                                 )
                             )
@@ -1692,26 +1695,50 @@ private fun MainBottomBar(
     currentTab: MainTab,
     onTabSelected: (MainTab) -> Unit
 ) {
-    // 玻璃质感：半透明白底悬浮在渐变背景上，去掉原来 80dp 的厚重 Box，用 Expressive 标准 64dp 高度
-    val glassColor = Color(0xEBFFFFFF) // ~92% 不透明白，透出底层渐变形成磨砂感
-    Box(
+    // iOS 风格磨砂 Tab Bar：半透明白底 + 顶部细分割线，选中项纯图标变色（无 Material 胶囊背景）
+    val selectedColor = Color(0xFF007AFF) // iOS 蓝
+    val unselectedColor = Color(0xFF8E8E93)
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(glassColor)
+            .background(Color(0xD9FFFFFF)) // ~85% 不透明白，透出底层彩色渐变形成磨砂感
     ) {
-        ShortNavigationBar(containerColor = Color.Transparent) {
+        // 顶部 0.5dp 细分割线（iOS UITabBar 同款）
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(0.5.dp)
+                .background(Color(0x33000000))
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             MainTab.values().forEach { tab ->
-                ShortNavigationBarItem(
-                    selected = currentTab == tab,
-                    onClick = { onTabSelected(tab) },
-                    icon = {
-                        Icon(
-                            imageVector = if (currentTab == tab) tab.selectedIcon else tab.unselectedIcon,
-                            contentDescription = tab.title
-                        )
-                    },
-                    label = { Text(tab.title) }
-                )
+                val selected = currentTab == tab
+                val tint = if (selected) selectedColor else unselectedColor
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onTabSelected(tab) },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = if (selected) tab.selectedIcon else tab.unselectedIcon,
+                        contentDescription = tab.title,
+                        tint = tint
+                    )
+                    Spacer(Modifier.height(3.dp))
+                    Text(
+                        text = tab.title,
+                        fontSize = 11.sp,
+                        color = tint
+                    )
+                }
             }
         }
     }
