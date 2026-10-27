@@ -30,6 +30,8 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -1362,9 +1364,23 @@ fun MainScreen(
                         }
                     }
                 } else {
-                    // 竖屏：Scaffold + 底部导航栏
+                    // 竖屏：Scaffold + 底部导航栏；外层铺玻璃感柔和渐变（粉→紫→蓝），让半透明导航/卡片透出折射感
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color(0xFFFDF4F5), // 顶部浅粉
+                                        Color(0xFFF3EEFB), // 中部浅紫
+                                        Color(0xFFEAF2FB)  // 底部浅蓝
+                                    )
+                                )
+                            )
+                    ) {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
+                        containerColor = Color.Transparent,
                         snackbarHost = { SnackbarHost(snackbarHostState) },
                         topBar = { topBarContent() },
                         bottomBar = {
@@ -1381,6 +1397,7 @@ fun MainScreen(
                         ) {
                             tabContent()
                         }
+                    }
                     }
                 }
 
@@ -1675,15 +1692,14 @@ private fun MainBottomBar(
     currentTab: MainTab,
     onTabSelected: (MainTab) -> Unit
 ) {
-    val barColor = ShortNavigationBarDefaults.containerColor
+    // 玻璃质感：半透明白底悬浮在渐变背景上，去掉原来 80dp 的厚重 Box，用 Expressive 标准 64dp 高度
+    val glassColor = Color(0xEBFFFFFF) // ~92% 不透明白，透出底层渐变形成磨砂感
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 80.dp)
-            .background(barColor),
-        contentAlignment = Alignment.Center
+            .background(glassColor)
     ) {
-        ShortNavigationBar(containerColor = barColor) {
+        ShortNavigationBar(containerColor = Color.Transparent) {
             MainTab.values().forEach { tab ->
                 ShortNavigationBarItem(
                     selected = currentTab == tab,
