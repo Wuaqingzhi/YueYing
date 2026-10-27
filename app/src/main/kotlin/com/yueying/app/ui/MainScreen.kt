@@ -1118,10 +1118,10 @@ fun MainScreen(
                             }
                         },
                         scrollBehavior = scrollBehavior,
-                        // 柔性顶栏没有专用的 largeTopAppBarColors，用通用 topAppBarColors（同为 TopAppBarColors 类型）
+                        // 顶栏透明，让底层粉紫蓝渐变透出，形成上下贯通的玻璃感
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            scrolledContainerColor = MaterialTheme.colorScheme.surface
+                            containerColor = Color.Transparent,
+                            scrolledContainerColor = Color.Transparent
                         )
                     )
                 }
