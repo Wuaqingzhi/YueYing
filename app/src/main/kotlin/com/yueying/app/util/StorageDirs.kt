@@ -26,24 +26,33 @@ import java.io.File
  *
  * 两套下载器的落盘方式完全不同 —— 内置的走 MediaStore/SAF（写 `content://`，Android 10+ 免存储权限），
  * 引擎是原生核心、**只能按真实文件路径写** —— 但**默认目录是同一个**：
- * 系统公共存储根目录下新建的「月影解析」文件夹，即 `/storage/emulated/0/月影解析/`。
+ * 系统公共 `Download/月影解析/` 文件夹，即 `/storage/emulated/0/Download/月影解析/`。
  */
 object StorageDirs {
 
-    /** 默认下载目录的文件夹名（显示名，也是 MediaStore RELATIVE_PATH 的根） */
+    /** 默认下载目录的文件夹名（显示名） */
     const val DEFAULT_DIR_NAME = "月影解析"
 
     /**
-     * 默认下载目录：系统公共存储根目录下的「月影解析」文件夹。
+     * MediaStore.Downloads 的相对路径。
      *
-     * 内置下载器落点就是这里（MediaStore 的 `RELATIVE_PATH = 月影解析`）；引擎直接拿绝对路径。
+     * Android 10+ 分区存储下，Downloads 集合要求 RELATIVE_PATH 落在 `Download/` 子树里；
+     * 直接写根目录名（如 `月影解析`）在 Android 16 上会 insert 失败 → 合并阶段报「下载目录不可用」。
+     * 这里统一用 `Download/月影解析`，免存储权限，用户在文件管理器里位于：内部存储/Download/月影解析。
+     */
+    const val MEDIA_RELATIVE_PATH = "Download/$DEFAULT_DIR_NAME"
+
+    /**
+     * 默认下载目录：系统公共存储 `Download/月影解析/`（真实文件路径，供 legacy 路径与 Gopeed 引擎用）。
+     *
+     * 内置下载器落点就是这里（MediaStore 的 `RELATIVE_PATH = MEDIA_RELATIVE_PATH`）；引擎直接拿绝对路径。
      * 注意 `getExternalStorageDirectory` 已废弃（分区存储时代推荐 MediaStore），
      * 但引擎本来就必须用真实路径，这里没有替代品；Android 10+ 内置下载器走 MediaStore，
      * 只有引擎（需「所有文件访问」权限）走这里的真实路径。
      */
     @Suppress("DEPRECATION")
     fun defaultDownloadDir(): File =
-        File(Environment.getExternalStorageDirectory(), DEFAULT_DIR_NAME)
+        File(Environment.getExternalStorageDirectory(), MEDIA_RELATIVE_PATH)
 
     /** 默认下载目录的绝对路径（UI 展示用） */
     fun defaultDownloadPath(): String = defaultDownloadDir().absolutePath

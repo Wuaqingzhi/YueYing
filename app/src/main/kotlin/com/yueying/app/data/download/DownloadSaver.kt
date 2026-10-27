@@ -237,11 +237,12 @@ object DownloadSaver {
         subDir: String
     ): DownloadDestination? {
         val resolver = context.contentResolver
-        // 默认保存目录 = 系统公共存储下的「月影解析」文件夹（与 StorageDirs.defaultDownloadDir() 同一口径）
+        // 默认保存目录 = 系统公共 Download 下的「月影解析」文件夹（与 StorageDirs.defaultDownloadDir() 同一口径）
+        // Android 16 要求 RELATIVE_PATH 落在 Download/ 子树，不能写根目录名
         val relativePath = if (subDir.isBlank()) {
-            StorageDirs.DEFAULT_DIR_NAME
+            StorageDirs.MEDIA_RELATIVE_PATH
         } else {
-            "${StorageDirs.DEFAULT_DIR_NAME}/$subDir"
+            "${StorageDirs.MEDIA_RELATIVE_PATH}/$subDir"
         }
         for (candidate in nameCandidates(fileName)) {
             try {
