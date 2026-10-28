@@ -1122,8 +1122,8 @@ fun MainScreen(
                         },
                         scrollBehavior = scrollBehavior,
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Color.White,
-                            scrolledContainerColor = Color.White
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            scrolledContainerColor = MaterialTheme.colorScheme.surface
                         )
                     )
                 }
@@ -1372,7 +1372,7 @@ fun MainScreen(
                     // 竖屏：纯白底 + 悬浮磨砂胶囊导航（无渐变）
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
-                        containerColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.background,
                         snackbarHost = { SnackbarHost(snackbarHostState) },
                         topBar = { topBarContent() },
                         bottomBar = {
@@ -1683,16 +1683,18 @@ private fun MainBottomBar(
     currentTab: MainTab,
     onTabSelected: (MainTab) -> Unit
 ) {
-    // iOS 17 悬浮胶囊 Tab Bar：白色大圆角胶囊，左右留边，浮在渐变内容之上
-    val selectedColor = Color(0xFF007AFF) // iOS 蓝
-    val unselectedColor = Color(0xFF8E8E93)
+    // iOS 17 悬浮磨砂胶囊 Tab Bar：颜色跟随深浅色主题
+    val dark = androidx.compose.foundation.isSystemInDarkTheme()
+    val selectedColor = if (dark) Color(0xFF0A84FF) else Color(0xFF007AFF)
+    val unselectedColor = if (dark) Color(0xFF98989F) else Color(0xFF8E8E93)
+    val capsuleColor = if (dark) Color(0xCC1C1C1E) else Color(0xCCFFFFFF)
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp)
             .shadow(elevation = 8.dp, shape = RoundedCornerShape(28.dp))
             .clip(RoundedCornerShape(28.dp))
-            .background(Color(0xCCFFFFFF)) // 80% 半透明白 = 磨砂玻璃感
+            .background(capsuleColor) // 80% 半透明 = 磨砂玻璃感
     ) {
         Row(
             modifier = Modifier
