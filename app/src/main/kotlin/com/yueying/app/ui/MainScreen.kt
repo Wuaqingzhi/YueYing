@@ -1687,14 +1687,13 @@ private fun MainBottomBar(
     val dark = androidx.compose.foundation.isSystemInDarkTheme()
     val selectedColor = if (dark) Color(0xFF0A84FF) else Color(0xFF007AFF)
     val unselectedColor = if (dark) Color(0xFF98989F) else Color(0xFF8E8E93)
-    val capsuleColor = if (dark) Color(0xCC1C1C1E) else Color(0xCCFFFFFF)
+    val capsuleColor = if (dark) Color(0xFF1C1C1E) else Color.White
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp)
-            .shadow(elevation = 8.dp, shape = RoundedCornerShape(28.dp))
             .clip(RoundedCornerShape(28.dp))
-            .background(capsuleColor) // 80% 半透明 = 磨砂玻璃感
+            .background(capsuleColor)
     ) {
         Row(
             modifier = Modifier
