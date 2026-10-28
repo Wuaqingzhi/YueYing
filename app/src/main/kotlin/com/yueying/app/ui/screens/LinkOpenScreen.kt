@@ -171,7 +171,7 @@ fun LinkOpenScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     ) { openLinkHandlingSettings(context) },
                 shape = MaterialTheme.shapes.large,
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0x33FFFFFF)Low
+                    containerColor = Color(0x33FFFFFF)
                 )
             ) {
                 Row(
@@ -258,7 +258,7 @@ private fun LinkOpenRow(
             ),
         shape = shape,
         colors = CardDefaults.cardColors(
-            containerColor = Color(0x33FFFFFF)Low
+            containerColor = Color(0x33FFFFFF)
         )
     ) {
         Row(

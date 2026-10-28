@@ -294,7 +294,7 @@ private fun MultiAccountSwitchRow(
             ),
         shape = shape,
         colors = CardDefaults.cardColors(
-            containerColor = Color(0x33FFFFFF)Low
+            containerColor = Color(0x33FFFFFF)
         )
     ) {
         Row(

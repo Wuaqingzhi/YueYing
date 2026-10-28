@@ -457,7 +457,7 @@ private fun PreviewOnboardingCard(onClick: () -> Unit) {
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
-            containerColor = Color(0x33FFFFFF)Low
+            containerColor = Color(0x33FFFFFF)
         )
     ) {
         Row(
@@ -509,7 +509,7 @@ private fun SectionCard(content: @Composable () -> Unit) {
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
-            containerColor = Color(0x33FFFFFF)Low
+            containerColor = Color(0x33FFFFFF)
         )
     ) {
         Column(modifier = Modifier.padding(16.dp)) { content() }
@@ -546,7 +546,7 @@ private fun GitHubCard(context: android.content.Context) {
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
-            containerColor = Color(0x33FFFFFF)Low
+            containerColor = Color(0x33FFFFFF)
         )
     ) {
         Row(
