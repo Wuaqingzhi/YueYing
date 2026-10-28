@@ -35,6 +35,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -102,6 +103,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -1811,7 +1814,9 @@ internal fun SettingsItem(
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .shadow(elevation = 6.dp, shape = shape, clip = false)
             .clip(shape)
+            .border(width = 1.dp, color = Color(0x99FFFFFF), shape = shape)
             .then(
                 if (checked != null) Modifier.toggleable(
                     value = checked,
