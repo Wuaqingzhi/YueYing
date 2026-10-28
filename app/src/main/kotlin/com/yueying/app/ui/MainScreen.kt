@@ -30,6 +30,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -1122,8 +1123,8 @@ fun MainScreen(
                         },
                         scrollBehavior = scrollBehavior,
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            scrolledContainerColor = MaterialTheme.colorScheme.surface
+                            containerColor = Color.Transparent,
+                            scrolledContainerColor = Color.Transparent
                         )
                     )
                 }
@@ -1369,10 +1370,23 @@ fun MainScreen(
                         }
                     }
                 } else {
-                    // 竖屏：纯白底 + 悬浮磨砂胶囊导航（无渐变）
+                    // 竖屏：Glassmorphism 渐变透光底图（浅蓝→浅紫→浅粉弥散）
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color(0xFFDCEBFF), // 浅蓝
+                                        Color(0xFFEDE4FF), // 浅紫
+                                        Color(0xFFFFE8F0)  // 浅粉
+                                    )
+                                )
+                            )
+                    ) {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
-                        containerColor = MaterialTheme.colorScheme.background,
+                        containerColor = Color.Transparent,
                         snackbarHost = { SnackbarHost(snackbarHostState) },
                         topBar = { topBarContent() },
                         bottomBar = {
@@ -1389,6 +1403,7 @@ fun MainScreen(
                         ) {
                             tabContent()
                         }
+                    }
                     }
                 }
 
@@ -1683,21 +1698,30 @@ private fun MainBottomBar(
     currentTab: MainTab,
     onTabSelected: (MainTab) -> Unit
 ) {
-    // iOS 17 悬浮磨砂胶囊 Tab Bar：颜色跟随深浅色主题
+    // Glassmorphism 高透毛玻璃胶囊导航
     val dark = androidx.compose.foundation.isSystemInDarkTheme()
     val selectedColor = if (dark) Color(0xFF0A84FF) else Color(0xFF007AFF)
-    val unselectedColor = if (dark) Color(0xFF98989F) else Color(0xFF8E8E93)
-    // 透明悬浮导航：只留图标和文字，不要深色/白色背景块
-    val capsuleColor = Color.Transparent
-    Column(
+    val unselectedColor = if (dark) Color(0xFFEBEBF0) else Color(0xFF6B6B70)
+    val glassColor = if (dark) Color(0x992C2C2E) else Color(0x99FFFFFF)
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .shadow(elevation = 12.dp, shape = RoundedCornerShape(28.dp), clip = false)
+            .clip(RoundedCornerShape(28.dp))
+            .background(glassColor)
+            .border(
+                width = 1.dp,
+                brush = Brush.verticalGradient(
+                    colors = listOf(Color(0x80FFFFFF), Color(0x20FFFFFF))
+                ),
+                shape = RoundedCornerShape(28.dp)
+            )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(60.dp),
+                .height(56.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
