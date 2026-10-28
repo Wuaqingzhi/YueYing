@@ -1382,6 +1382,7 @@ fun MainScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(innerPadding)
+                                .padding(bottom = 80.dp)
                         ) {
                             tabContent()
                             // 悬浮胶囊导航，不占 bottomBar 面板
