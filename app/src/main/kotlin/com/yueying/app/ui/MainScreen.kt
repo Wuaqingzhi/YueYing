@@ -1652,12 +1652,20 @@ fun MainScreen(
  */
 @Composable
 private fun OverlayPage(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    // sharedBounds 加在"底色之外"：形变中的容器自带不透明底色，过渡期间不会透出下层的窗口底色
+    // 渐变背景，和主页面一致
     Box(
         modifier = Modifier
             .fillMaxSize()
             .then(modifier)
-            .background(MaterialTheme.colorScheme.surface)
+            .background(
+                brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFDCEBFF),
+                        Color(0xFFEDE4FF),
+                        Color(0xFFFFE8F0)
+                    )
+                )
+            )
     ) {
         content()
     }
