@@ -1356,11 +1356,19 @@ fun MainScreen(
                             .fillMaxSize()
                             .background(
                                 Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color(0xFFDCEBFF), // 浅蓝
-                                        Color(0xFFEDE4FF), // 浅紫
-                                        Color(0xFFFFE8F0)  // 浅粉
-                                    )
+                                    colors = if (androidx.compose.foundation.isSystemInDarkTheme()) {
+                                        listOf(
+                                            Color(0xFF0F172A), // 深蓝黑
+                                            Color(0xFF1E1B4B), // 深紫黑
+                                            Color(0xFF312E81)  // 深紫
+                                        )
+                                    } else {
+                                        listOf(
+                                            Color(0xFFDCEBFF), // 浅蓝
+                                            Color(0xFFEDE4FF), // 浅紫
+                                            Color(0xFFFFE8F0)  // 浅粉
+                                        )
+                                    }
                                 )
                             )
                     ) {
@@ -1659,11 +1667,19 @@ private fun OverlayPage(modifier: Modifier = Modifier, content: @Composable () -
             .then(modifier)
             .background(
                 brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFFDCEBFF),
-                        Color(0xFFEDE4FF),
-                        Color(0xFFFFE8F0)
-                    )
+                    colors = if (androidx.compose.foundation.isSystemInDarkTheme()) {
+                        listOf(
+                            Color(0xFF0F172A),
+                            Color(0xFF1E1B4B),
+                            Color(0xFF312E81)
+                        )
+                    } else {
+                        listOf(
+                            Color(0xFFDCEBFF),
+                            Color(0xFFEDE4FF),
+                            Color(0xFFFFE8F0)
+                        )
+                    }
                 )
             )
     ) {
