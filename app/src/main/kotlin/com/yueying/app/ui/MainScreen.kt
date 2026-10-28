@@ -1376,26 +1376,22 @@ fun MainScreen(
                         modifier = Modifier.fillMaxSize(),
                         containerColor = Color.Transparent,
                         snackbarHost = { SnackbarHost(snackbarHostState) },
-                        topBar = { topBarContent() }
-                    ) { innerPadding ->
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(innerPadding)
-                                .padding(bottom = 160.dp)
-                        ) {
-                            tabContent()
-                            // 悬浮胶囊导航
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.BottomCenter)
-                                    .fillMaxWidth()
-                            ) {
+                        topBar = { topBarContent() },
+                        bottomBar = {
+                            Box(modifier = Modifier.background(Color.Transparent)) {
                                 MainBottomBar(
                                     currentTab = currentTab,
                                     onTabSelected = { currentTab = it }
                                 )
                             }
+                        }
+                    ) { innerPadding ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding)
+                        ) {
+                            tabContent()
                         }
                     }
                     }
@@ -1710,14 +1706,9 @@ private fun MainBottomBar(
 ) {
     // Glassmorphism 高透毛玻璃胶囊导航
     val dark = androidx.compose.foundation.isSystemInDarkTheme()
-    val selectedColor = if (dark) Color(0xFF34C759) else Color(0xFF34C759)
+    val selectedColor = if (dark) Color(0xFF0A84FF) else Color(0xFF007AFF)
     val unselectedColor = if (dark) Color(0xFFEBEBF0) else Color(0xFF6B6B70)
-    val glassColor = if (dark) Color(0x44000000) else Color(0x80FFFFFF)
-    val borderColors = if (dark) {
-        listOf(Color(0x33FFFFFF), Color(0x33B8D4FF), Color(0x33D4C8FF), Color(0x33FFFFFF))
-    } else {
-        listOf(Color(0xCCFFFFFF), Color(0xCCB8D4FF), Color(0xCCD4C8FF), Color(0xCCFFFFFF))
-    }
+    val glassColor = if (dark) Color(0x661C1C1E) else Color(0x80FFFFFF)
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -1726,7 +1717,14 @@ private fun MainBottomBar(
             .background(glassColor)
             .border(
                 width = 1.5.dp,
-                brush = Brush.linearGradient(colors = borderColors),
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        Color(0xCCFFFFFF),
+                        Color(0xCCB8D4FF),
+                        Color(0xCCD4C8FF),
+                        Color(0xCCFFFFFF)
+                    )
+                ),
                 shape = RoundedCornerShape(28.dp)
             )
     ) {

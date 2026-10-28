@@ -1814,14 +1814,11 @@ internal fun SettingsItem(
     modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val dark = androidx.compose.foundation.isSystemInDarkTheme()
-    val cardBg = if (dark) Color(0x22FFFFFF) else Color(0x33FFFFFF)
-    val cardBorder = if (dark) Color(0x33FFFFFF) else Color(0xCCFFFFFF)
     Card(
         modifier = modifier
             .fillMaxWidth()
             .clip(shape)
-            .border(width = 1.dp, color = cardBorder, shape = shape)
+            .border(width = 1.dp, color = Color(0xCCFFFFFF), shape = shape)
             .then(
                 if (checked != null) Modifier.toggleable(
                     value = checked,
@@ -1839,7 +1836,7 @@ internal fun SettingsItem(
         shape = shape,
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(
-            containerColor = cardBg
+            containerColor = Color(0x33FFFFFF)
         )
     ) {
         Row(
