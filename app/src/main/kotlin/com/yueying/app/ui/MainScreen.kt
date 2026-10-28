@@ -1687,7 +1687,7 @@ private fun MainBottomBar(
     val dark = androidx.compose.foundation.isSystemInDarkTheme()
     val selectedColor = if (dark) Color(0xFF0A84FF) else Color(0xFF007AFF)
     val unselectedColor = if (dark) Color(0xFF98989F) else Color(0xFF8E8E93)
-    val capsuleColor = if (dark) Color(0xFF1C1C1E) else Color.White
+    val capsuleColor = if (dark) Color(0xFF2C2C2E) else Color.White
     Column(
         modifier = Modifier
             .fillMaxWidth()
