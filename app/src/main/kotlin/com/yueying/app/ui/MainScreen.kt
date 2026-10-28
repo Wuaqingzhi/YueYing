@@ -1382,7 +1382,7 @@ fun MainScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(innerPadding)
-                                .padding(bottom = 120.dp)
+                                .padding(bottom = 160.dp)
                         ) {
                             tabContent()
                             // 悬浮胶囊导航
