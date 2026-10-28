@@ -1814,9 +1814,8 @@ internal fun SettingsItem(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(elevation = 2.dp, shape = shape, clip = false)
             .clip(shape)
-            .border(width = 1.dp, color = Color(0x99FFFFFF), shape = shape)
+            .border(width = 1.dp, color = Color(0xCCFFFFFF), shape = shape)
             .then(
                 if (checked != null) Modifier.toggleable(
                     value = checked,
@@ -1834,7 +1833,7 @@ internal fun SettingsItem(
         shape = shape,
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0x33FFFFFF)
+            containerColor = Color(0x26FFFFFF)
         )
     ) {
         Row(

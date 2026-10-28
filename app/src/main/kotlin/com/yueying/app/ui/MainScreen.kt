@@ -1702,17 +1702,16 @@ private fun MainBottomBar(
     val dark = androidx.compose.foundation.isSystemInDarkTheme()
     val selectedColor = if (dark) Color(0xFF0A84FF) else Color(0xFF007AFF)
     val unselectedColor = if (dark) Color(0xFFEBEBF0) else Color(0xFF6B6B70)
-    val glassColor = if (dark) Color(0x4D2C2C2E) else Color(0x4DFFFFFF)
+    val glassColor = if (dark) Color(0x401C1C1E) else Color(0x40FFFFFF)
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 10.dp)
-            .shadow(elevation = 4.dp, shape = RoundedCornerShape(28.dp), clip = false)
             .clip(RoundedCornerShape(28.dp))
             .background(glassColor)
             .border(
                 width = 1.dp,
-                color = Color(0xCCFFFFFF),
+                color = Color(0xE6FFFFFF),
                 shape = RoundedCornerShape(28.dp)
             )
     ) {
