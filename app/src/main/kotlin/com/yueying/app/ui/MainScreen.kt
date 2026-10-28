@@ -1691,7 +1691,7 @@ private fun MainBottomBar(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp)
             .clip(RoundedCornerShape(28.dp))
             .background(capsuleColor)
     ) {
