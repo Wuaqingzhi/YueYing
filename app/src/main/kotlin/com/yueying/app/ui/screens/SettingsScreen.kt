@@ -1814,7 +1814,7 @@ internal fun SettingsItem(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(elevation = 6.dp, shape = shape, clip = false)
+            .shadow(elevation = 8.dp, shape = shape, clip = false)
             .clip(shape)
             .border(width = 1.dp, color = Color(0x99FFFFFF), shape = shape)
             .then(
@@ -1832,8 +1832,9 @@ internal fun SettingsItem(
                 )
             ),
         shape = shape,
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            containerColor = Color(0x66FFFFFF)
         )
     ) {
         Row(
