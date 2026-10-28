@@ -76,7 +76,6 @@ private val lightScheme = lightColorScheme(
     surfaceContainer = surfaceContainerLight,
     surfaceContainerHigh = surfaceContainerHighLight,
     surfaceContainerHighest = surfaceContainerHighestLight,
-    dialogContainer = Color(0x33FFFFFF),
 )
 
 private val darkScheme = darkColorScheme(
@@ -115,7 +114,6 @@ private val darkScheme = darkColorScheme(
     surfaceContainer = surfaceContainerDark,
     surfaceContainerHigh = surfaceContainerHighDark,
     surfaceContainerHighest = surfaceContainerHighestDark,
-    dialogContainer = Color(0x33FFFFFF),
 )
 
 private val mediumContrastLightColorScheme = lightColorScheme(
