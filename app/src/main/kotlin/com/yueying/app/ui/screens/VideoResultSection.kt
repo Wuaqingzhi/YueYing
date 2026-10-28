@@ -638,7 +638,7 @@ private fun VideoMediaRow(
         modifier = Modifier.fillMaxWidth(),
         shape = listGroupShape(index, count),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            containerColor = Color(0x33FFFFFF)
         )
     ) {
         ListItem(

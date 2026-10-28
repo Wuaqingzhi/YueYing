@@ -231,7 +231,7 @@ fun ThemeScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    containerColor = Color(0x33FFFFFF)
                 )
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -265,7 +265,7 @@ fun ThemeScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    containerColor = Color(0x33FFFFFF)
                 )
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -299,7 +299,7 @@ fun ThemeScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    containerColor = Color(0x33FFFFFF)
                 )
             ) {
                 Column {
@@ -447,7 +447,7 @@ fun ThemeScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    containerColor = Color(0x33FFFFFF)
                 )
             ) {
                 Column {
@@ -684,7 +684,7 @@ internal fun ColorPickerDialog(
                 .padding(16.dp),
             shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer
+                containerColor = Color(0x33FFFFFF)
             )
         ) {
             Column(

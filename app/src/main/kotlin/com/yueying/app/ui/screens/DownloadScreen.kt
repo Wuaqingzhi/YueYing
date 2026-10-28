@@ -947,7 +947,7 @@ private fun DownloadTaskCard(
             ),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            containerColor = Color(0x33FFFFFF)
         )
     ) {
         Column(modifier = Modifier.padding(14.dp)) {

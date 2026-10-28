@@ -24,9 +24,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
 import com.yueying.app.data.db.MultiAccountEntity
 import com.yueying.app.data.db.XunleiAccountEntity
 import java.text.SimpleDateFormat
@@ -86,7 +90,7 @@ fun XunleiAccountSheet(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large,
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                colors = CardDefaults.cardColors(containerColor = Color(0x33FFFFFF))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     InfoRow(label = "登录时间", value = loginTime)

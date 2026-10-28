@@ -35,12 +35,19 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
 import com.yueying.app.data.db.VideoAccountEntity
 import com.yueying.app.data.network.video.VideoParsers
 import com.yueying.app.data.network.video.VideoPlatform
@@ -118,7 +125,7 @@ private fun VideoPlatformCard(
     }
     val cardShape = MaterialTheme.shapes.large
     val cardColors = CardDefaults.cardColors(
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        containerColor = Color(0x33FFFFFF)
     )
     val content: @Composable () -> Unit = {
         VideoPlatformCardContent(
