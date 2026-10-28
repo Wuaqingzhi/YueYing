@@ -106,6 +106,7 @@ fun AboutScreen(
     val versionCode = pkgInfo?.versionCode ?: 1
 
     Scaffold(
+        containerColor = Color.Transparent,
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
@@ -116,7 +117,7 @@ fun AboutScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = Color.Transparent
                 )
             )
         }

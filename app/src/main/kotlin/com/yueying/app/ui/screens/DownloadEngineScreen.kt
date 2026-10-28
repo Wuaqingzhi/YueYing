@@ -322,6 +322,7 @@ fun DownloadEngineScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
                 title = { Text("下载引擎", style = MaterialTheme.typography.titleLarge) },
@@ -330,7 +331,7 @@ fun DownloadEngineScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { innerPadding ->

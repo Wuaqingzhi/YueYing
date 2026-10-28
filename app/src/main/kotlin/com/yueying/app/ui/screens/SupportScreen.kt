@@ -135,6 +135,7 @@ fun SupportScreen(
     BackHandler { onBack() }
 
     Scaffold(
+        containerColor = Color.Transparent,
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
@@ -145,7 +146,7 @@ fun SupportScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = Color.Transparent
                 )
             )
         }

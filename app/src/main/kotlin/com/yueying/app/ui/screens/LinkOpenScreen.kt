@@ -96,6 +96,7 @@ fun LinkOpenScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     BackHandler { onBack() }
 
     Scaffold(
+        containerColor = Color.Transparent,
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
@@ -106,7 +107,7 @@ fun LinkOpenScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = Color.Transparent
                 )
             )
         }

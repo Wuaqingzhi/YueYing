@@ -204,6 +204,7 @@ fun ThemeScreen(
     }
 
     Scaffold(
+        containerColor = Color.Transparent,
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
@@ -214,7 +215,7 @@ fun ThemeScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = Color.Transparent
                 )
             )
         }
