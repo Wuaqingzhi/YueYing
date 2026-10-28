@@ -1687,13 +1687,12 @@ private fun MainBottomBar(
     val dark = androidx.compose.foundation.isSystemInDarkTheme()
     val selectedColor = if (dark) Color(0xFF0A84FF) else Color(0xFF007AFF)
     val unselectedColor = if (dark) Color(0xFF98989F) else Color(0xFF8E8E93)
-    val capsuleColor = if (dark) Color(0xFF2C2C2E) else Color.White
+    // 透明悬浮导航：只留图标和文字，不要深色/白色背景块
+    val capsuleColor = Color.Transparent
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(28.dp))
-            .background(capsuleColor)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Row(
             modifier = Modifier
