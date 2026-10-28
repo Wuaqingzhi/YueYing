@@ -1814,7 +1814,7 @@ internal fun SettingsItem(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(elevation = 3.dp, shape = shape, clip = false)
+            .shadow(elevation = 1.dp, shape = shape, clip = false)
             .clip(shape)
             .border(width = 1.dp, color = Color(0xCCFFFFFF), shape = shape)
             .then(
