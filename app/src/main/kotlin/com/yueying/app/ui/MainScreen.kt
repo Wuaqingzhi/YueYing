@@ -1382,7 +1382,7 @@ fun MainScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(innerPadding)
-                                .padding(bottom = 140.dp)
+                                .padding(bottom = 160.dp)
                         ) {
                             tabContent()
                             // 悬浮胶囊导航
@@ -1721,8 +1721,7 @@ private fun MainBottomBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp)
+            .padding(horizontal = 16.dp, vertical = 10.dp)
             .clip(RoundedCornerShape(28.dp))
             .background(glassColor)
             .border(
