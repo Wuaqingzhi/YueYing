@@ -42,6 +42,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -328,7 +329,7 @@ private fun MultiAccountSwitchRow(
             }
             Spacer(modifier = Modifier.width(12.dp))
             // onCheckedChange = null：点击交给整行处理，避免行与开关各响应一次
-            Switch(checked = checked, onCheckedChange = null, enabled = enabled)
+            Switch(checked = checked, onCheckedChange = null, enabled = enabled, colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Color(0xFF34C759)))
         }
     }
 }

@@ -88,6 +88,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -558,7 +559,7 @@ fun SettingsScreen(
                 settingsRepo.quarkNoSaveDownload = quarkNoSave
             },
             checked = quarkNoSave,
-            trailing = { Switch(checked = quarkNoSave, onCheckedChange = null) }
+            trailing = { Switch(checked = quarkNoSave, onCheckedChange = null, colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Color(0xFF34C759))) }
         )
 
         Spacer(modifier = Modifier.height(ListGroupGap))
@@ -581,7 +582,7 @@ fun SettingsScreen(
                 }
             },
             checked = keepLocked,
-            trailing = { Switch(checked = keepLocked, onCheckedChange = null) }
+            trailing = { Switch(checked = keepLocked, onCheckedChange = null, colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Color(0xFF34C759))) }
         )
 
         Spacer(modifier = Modifier.height(ListGroupGap))
@@ -613,7 +614,7 @@ fun SettingsScreen(
                 }
             },
             checked = if (notificationsEnabled) showSpeed else null,
-            trailing = { Switch(checked = showSpeed, onCheckedChange = null) }
+            trailing = { Switch(checked = showSpeed, onCheckedChange = null, colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Color(0xFF34C759))) }
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -648,7 +649,7 @@ fun SettingsScreen(
             },
             checked = ThemeController.clipboardSuggestEnabled,
             trailing = {
-                Switch(checked = ThemeController.clipboardSuggestEnabled, onCheckedChange = null)
+                Switch(checked = ThemeController.clipboardSuggestEnabled, onCheckedChange = null, colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Color(0xFF34C759)))
             }
         )
 
@@ -681,7 +682,7 @@ fun SettingsScreen(
             },
             checked = ThemeController.acceptPrereleaseUpdate,
             trailing = {
-                Switch(checked = ThemeController.acceptPrereleaseUpdate, onCheckedChange = null)
+                Switch(checked = ThemeController.acceptPrereleaseUpdate, onCheckedChange = null, colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Color(0xFF34C759)))
             }
         )
 
@@ -973,6 +974,7 @@ fun SettingsScreen(
                         }
                         Switch(
                             checked = diagnosticOn,
+                            colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Color(0xFF34C759)),
                             onCheckedChange = { on ->
                                 diagnosticOn = on
                                 settingsRepo.diagnosticMode = on
@@ -1005,6 +1007,7 @@ fun SettingsScreen(
                         }
                         Switch(
                             checked = downloadDebugOn,
+                            colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Color(0xFF34C759)),
                             onCheckedChange = { on ->
                                 if (on) {
                                     downloadDebugOn = true
