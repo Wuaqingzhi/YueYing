@@ -1376,20 +1376,26 @@ fun MainScreen(
                         modifier = Modifier.fillMaxSize(),
                         containerColor = Color.Transparent,
                         snackbarHost = { SnackbarHost(snackbarHostState) },
-                        topBar = { topBarContent() },
-                        bottomBar = {
-                            MainBottomBar(
-                                currentTab = currentTab,
-                                onTabSelected = { currentTab = it }
-                            )
-                        }
+                        topBar = { topBarContent() }
                     ) { innerPadding ->
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(innerPadding)
+                                .padding(bottom = 120.dp)
                         ) {
                             tabContent()
+                            // 悬浮胶囊导航
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .fillMaxWidth()
+                            ) {
+                                MainBottomBar(
+                                    currentTab = currentTab,
+                                    onTabSelected = { currentTab = it }
+                                )
+                            }
                         }
                     }
                     }
