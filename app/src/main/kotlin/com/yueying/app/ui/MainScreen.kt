@@ -1067,33 +1067,13 @@ fun MainScreen(
                 // ★ rememberSharedContentState 是 @Composable，必须在 composable 作用域里直接调用，
                 //   不能包在普通 lambda 里延迟构造 —— 所以这里一次性建好再传下去。
                 val sourceScope = this
-                val themeRowModifier = Modifier.sharedBounds(
-                    rememberSharedContentState(OVERLAY_KEY_THEME),
-                    animatedVisibilityScope = sourceScope
-                )
-                val aboutRowModifier = Modifier.sharedBounds(
-                    rememberSharedContentState(OVERLAY_KEY_ABOUT),
-                    animatedVisibilityScope = sourceScope
-                )
-                val supportRowModifier = Modifier.sharedBounds(
-                    rememberSharedContentState(OVERLAY_KEY_SUPPORT),
-                    animatedVisibilityScope = sourceScope
-                )
-                // 「下载引擎」行 → 下载引擎页：和上面三行同样走容器变换（整行长成整页）
-                val engineRowModifier = Modifier.sharedBounds(
-                    rememberSharedContentState(OVERLAY_KEY_GOPEED),
-                    animatedVisibilityScope = sourceScope
-                )
-                // 「链接唤起」行 → 链接唤起设置页：同样走容器变换
-                val linkOpenRowModifier = Modifier.sharedBounds(
-                    rememberSharedContentState(OVERLAY_KEY_LINK_OPEN),
-                    animatedVisibilityScope = sourceScope
-                )
-                // 「多账号下载」行 → 多账号下载设置页：同样走容器变换
-                val multiAccountRowModifier = Modifier.sharedBounds(
-                    rememberSharedContentState(OVERLAY_KEY_MULTI_ACCOUNT),
-                    animatedVisibilityScope = sourceScope
-                )
+                // 去掉 sharedBounds，避免灰色容器 overlay，所有卡片玻璃材质统一
+                val themeRowModifier = Modifier
+                val aboutRowModifier = Modifier
+                val supportRowModifier = Modifier
+                val engineRowModifier = Modifier
+                val linkOpenRowModifier = Modifier
+                val multiAccountRowModifier = Modifier
                 Box(modifier = Modifier.fillMaxSize()) {
                 // 顶部可折叠标题（竖屏 / 横屏共用）：Expressive 的「中号柔性顶栏」
                 val topBarContent: @Composable () -> Unit = {
