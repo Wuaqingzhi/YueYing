@@ -1706,9 +1706,14 @@ private fun MainBottomBar(
 ) {
     // Glassmorphism 高透毛玻璃胶囊导航
     val dark = androidx.compose.foundation.isSystemInDarkTheme()
-    val selectedColor = if (dark) Color(0xFF0A84FF) else Color(0xFF007AFF)
+    val selectedColor = if (dark) Color(0xFF34C759) else Color(0xFF34C759)
     val unselectedColor = if (dark) Color(0xFFEBEBF0) else Color(0xFF6B6B70)
-    val glassColor = if (dark) Color(0x661C1C1E) else Color(0x80FFFFFF)
+    val glassColor = if (dark) Color(0x44000000) else Color(0x80FFFFFF)
+    val borderColors = if (dark) {
+        listOf(Color(0x33FFFFFF), Color(0x33B8D4FF), Color(0x33D4C8FF), Color(0x33FFFFFF))
+    } else {
+        listOf(Color(0xCCFFFFFF), Color(0xCCB8D4FF), Color(0xCCD4C8FF), Color(0xCCFFFFFF))
+    }
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -1717,14 +1722,7 @@ private fun MainBottomBar(
             .background(glassColor)
             .border(
                 width = 1.5.dp,
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        Color(0xCCFFFFFF),
-                        Color(0xCCB8D4FF),
-                        Color(0xCCD4C8FF),
-                        Color(0xCCFFFFFF)
-                    )
-                ),
+                brush = Brush.linearGradient(colors = borderColors),
                 shape = RoundedCornerShape(28.dp)
             )
     ) {
