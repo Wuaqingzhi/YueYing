@@ -1386,10 +1386,12 @@ fun MainScreen(
                         snackbarHost = { SnackbarHost(snackbarHostState) },
                         topBar = { topBarContent() },
                         bottomBar = {
-                            MainBottomBar(
-                                currentTab = currentTab,
-                                onTabSelected = { currentTab = it }
-                            )
+                            Box(modifier = Modifier.background(Color.Transparent)) {
+                                MainBottomBar(
+                                    currentTab = currentTab,
+                                    onTabSelected = { currentTab = it }
+                                )
+                            }
                         }
                     ) { innerPadding ->
                         Box(
