@@ -1383,15 +1383,14 @@ fun MainScreen(
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
                         containerColor = Color.Transparent,
+                        bottomBarContainerColor = Color.Transparent,
                         snackbarHost = { SnackbarHost(snackbarHostState) },
                         topBar = { topBarContent() },
                         bottomBar = {
-                            Box(modifier = Modifier.background(Color.Transparent)) {
-                                MainBottomBar(
-                                    currentTab = currentTab,
-                                    onTabSelected = { currentTab = it }
-                                )
-                            }
+                            MainBottomBar(
+                                currentTab = currentTab,
+                                onTabSelected = { currentTab = it }
+                            )
                         }
                     ) { innerPadding ->
                         Box(
@@ -1723,7 +1722,7 @@ private fun MainBottomBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 32.dp, vertical = 10.dp)
+            .padding(horizontal = 16.dp, vertical = 10.dp)
             .clip(RoundedCornerShape(28.dp))
             .background(glassColor)
             .border(
