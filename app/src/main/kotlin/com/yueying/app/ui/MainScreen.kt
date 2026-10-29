@@ -1723,7 +1723,7 @@ private fun MainBottomBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .padding(horizontal = 32.dp, vertical = 10.dp)
             .clip(RoundedCornerShape(28.dp))
             .background(glassColor)
             .border(
