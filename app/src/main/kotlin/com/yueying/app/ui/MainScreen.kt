@@ -1383,7 +1383,6 @@ fun MainScreen(
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
                         containerColor = Color.Transparent,
-                        bottomBarContainerColor = Color.Transparent,
                         snackbarHost = { SnackbarHost(snackbarHostState) },
                         topBar = { topBarContent() },
                         bottomBar = {
