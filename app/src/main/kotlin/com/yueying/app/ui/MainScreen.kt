@@ -27,9 +27,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -1062,14 +1060,8 @@ fun MainScreen(
         ) {
             AnimatedVisibility(
                 visible = overlayRoute == null,
-                enter = fadeIn(effectsDefault()) + slideInVertically(
-                    animationSpec = effectsDefault(),
-                    initialOffsetY = { -it / 8 }
-                ),
-                exit = fadeOut(effectsFast()) + slideOutVertically(
-                    animationSpec = effectsFast(),
-                    targetOffsetY = { -it / 8 }
-                )
+                enter = fadeIn(effectsDefault()),
+                exit = fadeOut(effectsFast())
             ) {
                 // 源侧共享元素修饰符：设置页里能进入独立页面的那几行各自对应一个 key（见 SettingsScreen）。
                 // ★ rememberSharedContentState 是 @Composable，必须在 composable 作用域里直接调用，
@@ -1411,14 +1403,11 @@ fun MainScreen(
             // 目标：叠加页（整屏 + 不透明底 + sharedBounds：从被点那一项长出来）
             AnimatedVisibility(
                 visible = overlayRoute != null,
-                enter = fadeIn(effectsDefault()) + slideInVertically(
-                    animationSpec = effectsDefault(),
-                    initialOffsetY = { it / 8 }
-                ),
-                exit = fadeOut(tween(durationMillis = 300)) + slideOutVertically(
-                    animationSpec = tween(durationMillis = 300),
-                    targetOffsetY = { it / 8 }
-                )
+                enter = fadeIn(effectsDefault()),
+                // ★ 退出时长必须≥ sharedBounds 形变的时长（默认 bounds 弹簧约 300ms）：
+                //   AnimatedVisibility 的退出一结束就会把内容移出组合，页面提前消失 → 回收形变被截断，
+                //   观感就是"退出一闪而过、像没做动画"。所以这里刻意用 300ms 的 tween 而不是 effectsFast(≈64ms)。
+                exit = fadeOut(tween(durationMillis = 300))
             ) {
                 val targetScope = this
                 // ★ 读"正在展示的路由"而不是 overlayRoute：后者在点返回的瞬间就变 null 了，
